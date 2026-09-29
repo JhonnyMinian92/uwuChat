@@ -61,3 +61,10 @@ More unit tests usually improve speed and diagnosis, while integration and end-t
 - **Critical login journey:** add end-to-end coverage.
 - **API provider/consumer boundary:** add contract tests.
 
+## Tests required by Gemini
+
+- Pruebas unitarias de dominio para validar la lógica de enrutamiento y normalización de mensajes.
+- Pruebas de integración para verificar el aislamiento estricto de datos entre tenants en la base de datos.
+- Pruebas de seguridad para validar la verificación de firmas en webhooks de Meta y Telegram.
+- Pruebas end-to-end de la bandeja de chat en tiempo real con WebSockets.
+

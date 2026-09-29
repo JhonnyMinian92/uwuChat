@@ -1,1 +1,139 @@
-{}
+{
+  "contract_version": "1.1",
+  "request_id": "a77b8a64-f8cf-4a9d-8ee9-1dc0535aa6e5",
+  "project_memory_revision": 1,
+  "status": "READY",
+  "summary": "Análisis inicial completado para uwuChat. Se ha estructurado el plan de implementación basado en arquitectura hexagonal, FastAPI para el backend, React 18 para el frontend, y adaptadores para la unificación de canales de mensajería (WhatsApp, Messenger, Instagram, Telegram, Discord, Email).",
+  "changes": [
+    "Uso de FastAPI (Python 3.12) para la API REST, manejo de webhooks e integración con canales.",
+    "Uso de React 18 con TypeScript para la interfaz web unificada.",
+    "Implementación de arquitectura hexagonal y patrones de repositorio, adaptador y estrategia."
+  ],
+  "tasks": [
+    {
+      "key": "T1",
+      "title": "Configuración del proyecto backend con FastAPI y estructura hexagonal",
+      "description": "Inicializar el repositorio backend con Python 3.12 y FastAPI, configurando la estructura de carpetas siguiendo la arquitectura hexagonal (domain, application, ports, adapters/inbound, adapters/outbound). Configurar dependencias, linter y tipado estricto.",
+      "acceptance_criteria": [
+        "El servidor levanta correctamente con Uvicorn.",
+        "La estructura de directorios respeta los principios de arquitectura hexagonal.",
+        "El entorno de desarrollo está completamente documentado y funcional."
+      ],
+      "depends_on": [],
+      "story": "Infraestructura Base Backend"
+    },
+    {
+      "key": "T2",
+      "title": "Diseño y migración de base de datos multi-tenant",
+      "description": "Configurar la conexión a la base de datos con gestión de transacciones explícitas (Explicit Transaction Boundary) y concurrencia optimista (Optimistic Concurrency). Definir los modelos de datos para Empresas, Usuarios, Canales, Contactos, Conversaciones y Mensajes asegurando el aislamiento estricto de datos entre tenants.",
+      "acceptance_criteria": [
+        "Los modelos reflejan las relaciones requeridas sin fugas de datos entre empresas.",
+        "Se implementan migraciones de base de datos automatizadas.",
+        "Se aplican restricciones de aislamiento por tenant en las consultas."
+      ],
+      "depends_on": [
+        "T1"
+      ],
+      "story": "Gestión de Datos y Tenants"
+    },
+    {
+      "key": "T3",
+      "title": "Implementación del módulo de autenticación y autorización JWT",
+      "description": "Crear el sistema de autenticación basado en JWT con control de acceso basado en roles (RBAC) para administrador de empresa, supervisor y agente de atención, aplicando el principio de defensa en profundidad.",
+      "acceptance_criteria": [
+        "Endpoints de login y emisión de tokens seguros.",
+        "Middleware de validación de roles y aislamiento por empresa operativo.",
+        "Pruebas unitarias para los flujos de autenticación."
+      ],
+      "depends_on": [
+        "T2"
+      ],
+      "story": "Seguridad y Accesos"
+    },
+    {
+      "key": "T4",
+      "title": "Desarrollo del motor de adaptadores de canales de mensajería",
+      "description": "Implementar el patrón Strategy y Adapter para unificar la recepción y envío de mensajes de WhatsApp Cloud API, Facebook Messenger, Instagram Messaging, Telegram Bot API, Discord bot y correo IMAP/SMTP mediante una interfaz común.",
+      "acceptance_criteria": [
+        "Normalización correcta de mensajes entrantes de cada canal a un modelo común.",
+        "Cifrado seguro de credenciales de canales en la base de datos.",
+        "Manejo de webhooks verificados por firma criptográfica."
+      ],
+      "depends_on": [
+        "T3"
+      ],
+      "story": "Integración de Canales"
+    },
+    {
+      "key": "T5",
+      "title": "Construcción de la bandeja unificada en React 18",
+      "description": "Desarrollar la interfaz web en React 18 con TypeScript utilizando componentes contenedores y presentacionales. Incluir lista de conversaciones, filtros avanzados (modern filters), buscador con debounce y comunicación en tiempo real mediante WebSockets.",
+      "acceptance_criteria": [
+        "Renderizado fluido de la bandeja con WebSockets integrados para mensajes en tiempo real.",
+        "Filtros combinables y buscador operativos con manejo de estado vacío.",
+        "Uso correcto de Skeleton loading para la carga de datos."
+      ],
+      "depends_on": [
+        "T3"
+      ],
+      "story": "Frontend y Bandeja Unificada"
+    },
+    {
+      "key": "T6",
+      "title": "Panel de administración y métricas por empresa",
+      "description": "Implementar las vistas y endpoints para la gestión de canales, agentes, horarios de atención, respuestas rápidas y el tablero de métricas de rendimiento (tiempo de primera respuesta, resolución, volumen).",
+      "acceptance_criteria": [
+        "CRUD completo de configuración empresarial y agentes desde la UI.",
+        "Cálculo preciso de métricas por empresa, canal y agente.",
+        "Pruebas de integración para los flujos administrativos."
+      ],
+      "depends_on": [
+        "T4",
+        "T5"
+      ],
+      "story": "Administración y Métricas"
+    }
+  ],
+  "tests": [
+    "Pruebas unitarias de dominio para validar la lógica de enrutamiento y normalización de mensajes.",
+    "Pruebas de integración para verificar el aislamiento estricto de datos entre tenants en la base de datos.",
+    "Pruebas de seguridad para validar la verificación de firmas en webhooks de Meta y Telegram.",
+    "Pruebas end-to-end de la bandeja de chat en tiempo real con WebSockets."
+  ],
+  "questions": [],
+  "memory_updates": [
+    {
+      "path": "architecture/hierarchy.md",
+      "content_type": "text/markdown",
+      "content": "",
+      "base_sha": "a7afe0fa90dfb5182f920a9cb0ad73e418592956ae2cb09082fcb880899b0be0",
+      "reason": "Definición completa de la jerarquía de archivos y estructura del proyecto para FastAPI y React.",
+      "update": "# File and Directory Hierarchy\n\n- `/backend`: API FastAPI, adaptadores y lógica de negocio.\n  - `domain/`: Entidades y casos de uso principales.\n  - `ports/`: Interfaces de entrada y salida.\n  - `adapters/`: Implementaciones concretas (webhooks, base de datos, canales).\n- `/frontend`: Aplicación web React 18 con TypeScript.\n  - `components/`: Componentes presentacionales y contenedores.\n  - `services/`: Comunicación con la API REST y WebSockets."
+    }
+  ],
+  "rationale": [
+    "Se ha validado la viabilidad técnica utilizando FastAPI para la concurrencia asíncrona requerida por los webhooks y React 18 para la interfaz de usuario en tiempo real.",
+    "La arquitectura hexagonal garantiza el desacoplamiento de los proveedores de mensajería externos."
+  ],
+  "warnings": [],
+  "missing_information": [],
+  "assumptions": [
+    "Se asume que las credenciales de acceso a las APIs de Meta, Telegram y Discord serán provistas mediante variables de entorno o configuración cifrada por empresa."
+  ],
+  "validation": {
+    "contract_version": "1.1",
+    "memory_revision": 1,
+    "status": "READY",
+    "accepted": [
+      {
+        "path": "architecture/hierarchy.md",
+        "operation": "UPSERT_FILE",
+        "reason": "Definición completa de la jerarquía de archivos y estructura del proyecto para FastAPI y React."
+      }
+    ],
+    "rejected": [],
+    "questions": 0,
+    "blocking_questions": 0,
+    "tasks": 6
+  }
+}
