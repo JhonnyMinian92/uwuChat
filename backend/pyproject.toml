@@ -11,6 +11,8 @@ dependencies = [
     "sqlalchemy>=2.0.25",
     "alembic>=1.13.1",
     "psycopg[binary]>=3.1.17",
+    "pyjwt>=2.8.0",
+    "passlib[bcrypt]>=1.7.4",
 ]
 
 [project.optional-dependencies]
@@ -30,7 +32,7 @@ dev-dependencies = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["-"]
 
 [tool.ruff]
 line-length = 100
@@ -43,4 +45,4 @@ ignore = []
 [tool.mypy]
 python_version = "3.12"
 strict = true
-ignore_missing_imports = true
+ingore_missing_imports = true
