@@ -68,3 +68,10 @@ More unit tests usually improve speed and diagnosis, while integration and end-t
 - Pruebas de seguridad para validar la verificación de firmas en webhooks de Meta y Telegram.
 - Pruebas end-to-end de la bandeja de chat en tiempo real con WebSockets.
 
+## Tests required by Gemini
+
+- Pruebas de aislamiento de base de datos: Verificar que el usuario A de Empresa 1 no puede leer mensajes de Empresa 2 mediante manipulación de IDs.
+- Pruebas de firma de Webhooks: Simular payloads de Meta con firmas correctas e incorrectas.
+- Pruebas de concurrencia: Dos agentes intentando asignar la misma conversación simultáneamente (Optimistic Concurrency).
+- Pruebas de integración IMAP: Verificar que correos con adjuntos pesados se procesan y normalizan correctamente.
+

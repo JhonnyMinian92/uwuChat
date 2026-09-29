@@ -1,68 +1,73 @@
 # Gemini Initial Plan
 
-Análisis inicial completado para uwuChat. Se ha estructurado el plan de implementación basado en arquitectura hexagonal, FastAPI para el backend, React 18 para el frontend, y adaptadores para la unificación de canales de mensajería (WhatsApp, Messenger, Instagram, Telegram, Discord, Email).
+Análisis de preparación para uwuChat completado. Se han mantenido las tareas pendientes prioritarias y se han añadido tareas críticas para la infraestructura de tiempo real (WebSockets) y el procesamiento asíncrono necesario para el sondeo de correos y reintentos de webhooks. Se define el esquema de base de datos multi-tenant detallado para asegurar el aislamiento estricto.
 
 ## Changes
 
-- Uso de FastAPI (Python 3.12) para la API REST, manejo de webhooks e integración con canales.
-- Uso de React 18 con TypeScript para la interfaz web unificada.
-- Implementación de arquitectura hexagonal y patrones de repositorio, adaptador y estrategia.
+- Incorporación de Redis como broker para Celery (procesamiento de correos IMAP y reintentos) y como Pub/Sub para WebSockets.
+- Definición explícita del modelo de fusión de identidades (Customer vs Contact) en la base de datos.
+- Refuerzo del esquema de seguridad para el cifrado de credenciales de canales (Requirement 3).
 
 ## Tasks
 
-- **T1** Configuración del proyecto backend con FastAPI y estructura hexagonal
-  - Historia: Infraestructura Base Backend
-  - Inicializar el repositorio backend con Python 3.12 y FastAPI, configurando la estructura de carpetas siguiendo la arquitectura hexagonal (domain, application, ports, adapters/inbound, adapters/outbound). Configurar dependencias, linter y tipado estricto.
-  - [ ] El servidor levanta correctamente con Uvicorn.
-  - [ ] La estructura de directorios respeta los principios de arquitectura hexagonal.
-  - [ ] El entorno de desarrollo está completamente documentado y funcional.
-- **T2** Diseño y migración de base de datos multi-tenant (depende de: T1)
-  - Historia: Gestión de Datos y Tenants
-  - Configurar la conexión a la base de datos con gestión de transacciones explícitas (Explicit Transaction Boundary) y concurrencia optimista (Optimistic Concurrency). Definir los modelos de datos para Empresas, Usuarios, Canales, Contactos, Conversaciones y Mensajes asegurando el aislamiento estricto de datos entre tenants.
-  - [ ] Los modelos reflejan las relaciones requeridas sin fugas de datos entre empresas.
-  - [ ] Se implementan migraciones de base de datos automatizadas.
-  - [ ] Se aplican restricciones de aislamiento por tenant en las consultas.
-- **T3** Implementación del módulo de autenticación y autorización JWT (depende de: T2)
-  - Historia: Seguridad y Accesos
-  - Crear el sistema de autenticación basado en JWT con control de acceso basado en roles (RBAC) para administrador de empresa, supervisor y agente de atención, aplicando el principio de defensa en profundidad.
-  - [ ] Endpoints de login y emisión de tokens seguros.
-  - [ ] Middleware de validación de roles y aislamiento por empresa operativo.
-  - [ ] Pruebas unitarias para los flujos de autenticación.
-- **T4** Desarrollo del motor de adaptadores de canales de mensajería (depende de: T3)
+- **T4** Desarrollo del motor de adaptadores de canales de mensajería
   - Historia: Integración de Canales
-  - Implementar el patrón Strategy y Adapter para unificar la recepción y envío de mensajes de WhatsApp Cloud API, Facebook Messenger, Instagram Messaging, Telegram Bot API, Discord bot y correo IMAP/SMTP mediante una interfaz común.
-  - [ ] Normalización correcta de mensajes entrantes de cada canal a un modelo común.
-  - [ ] Cifrado seguro de credenciales de canales en la base de datos.
-  - [ ] Manejo de webhooks verificados por firma criptográfica.
-- **T5** Construcción de la bandeja unificada en React 18 (depende de: T3)
-  - Historia: Frontend y Bandeja Unificada
-  - Desarrollar la interfaz web en React 18 con TypeScript utilizando componentes contenedores y presentacionales. Incluir lista de conversaciones, filtros avanzados (modern filters), buscador con debounce y comunicación en tiempo real mediante WebSockets.
-  - [ ] Renderizado fluido de la bandeja con WebSockets integrados para mensajes en tiempo real.
-  - [ ] Filtros combinables y buscador operativos con manejo de estado vacío.
-  - [ ] Uso correcto de Skeleton loading para la carga de datos.
-- **T6** Panel de administración y métricas por empresa (depende de: T4, T5)
-  - Historia: Administración y Métricas
-  - Implementar las vistas y endpoints para la gestión de canales, agentes, horarios de atención, respuestas rápidas y el tablero de métricas de rendimiento (tiempo de primera respuesta, resolución, volumen).
-  - [ ] CRUD completo de configuración empresarial y agentes desde la UI.
-  - [ ] Cálculo preciso de métricas por empresa, canal y agente.
-  - [ ] Pruebas de integración para los flujos administrativos.
+  - Implementar el patrón Strategy y Adapter en el backend para unificar la recepción y envío de mensajes. Debe incluir validadores de firma para Meta (X-Hub-Signature-256) y Telegram. Los adaptadores deben normalizar los payloads a un esquema de mensaje interno común.
+  - [ ] Adaptadores funcionales para WhatsApp, Telegram y Discord.
+  - [ ] Validación de firmas criptográficas en webhooks de entrada.
+  - [ ] Normalización de adjuntos (imágenes, audio) a una estructura común.
+  - [ ] Uso de Idempotency Key basada en el ID de mensaje del proveedor externo.
+- **T7** Infraestructura asíncrona y procesamiento de correo IMAP (depende de: T4)
+  - Historia: Canal de Correo y Resiliencia
+  - Configurar Celery con Redis para el sondeo periódico de buzones IMAP y el envío SMTP. Implementar lógica de reintentos con backoff exponencial para fallos en las APIs de los proveedores.
+  - [ ] Sondeo IMAP funcional recuperando correos no leídos.
+  - [ ] Cola de tareas para envío de mensajes salientes.
+  - [ ] Mecanismo de reintento observable en logs ante fallos de red con proveedores.
+- **T5** Construcción de la bandeja unificada en React 18 (depende de: T7)
+  - Historia: Bandeja de Entrada
+  - Desarrollar la interfaz de chat en tiempo real utilizando WebSockets (FastAPI + Redis Pub/Sub). Implementar componentes de lista de conversaciones, buscador con debounce y filtros avanzados según los patrones de diseño seleccionados.
+  - [ ] Mensajes entrantes aparecen instantáneamente sin refrescar.
+  - [ ] Buscador filtra contactos y mensajes con debounce de 300ms.
+  - [ ] Skeleton loading aplicado durante la carga inicial de conversaciones.
+  - [ ] Aislamiento visual: un agente solo ve datos de su propia empresa.
+- **T8** Lógica de fusión de identidades y gestión de contactos (depende de: T5)
+  - Historia: Gestión de Contactos
+  - Implementar el servicio de dominio para vincular múltiples 'Contactos' (canal+id) a un único 'Cliente' (Customer) mediante reglas de negocio o intervención manual del agente.
+  - [ ] Posibilidad de unir un contacto de WhatsApp y uno de Telegram en un mismo perfil.
+  - [ ] Historial unificado de mensajes en la vista de cliente fusionado.
+  - [ ] Validación de que ambos contactos pertenecen a la misma empresa (tenant).
+- **T6** Panel de administración y métricas por empresa (depende de: T5)
+  - Historia: Administración y Business Intelligence
+  - Crear el dashboard de métricas calculando tiempos de respuesta y volúmenes. Implementar la gestión de configuración de empresa: horarios, respuestas rápidas y roles de usuario.
+  - [ ] Gráficos de volumen de mensajes por canal/agente.
+  - [ ] Configuración de horario de atención reflejada en mensajes automáticos.
+  - [ ] CRUD de respuestas rápidas funcional en la bandeja de chat.
 
 ## Tests
 
-- Pruebas unitarias de dominio para validar la lógica de enrutamiento y normalización de mensajes.
-- Pruebas de integración para verificar el aislamiento estricto de datos entre tenants en la base de datos.
-- Pruebas de seguridad para validar la verificación de firmas en webhooks de Meta y Telegram.
-- Pruebas end-to-end de la bandeja de chat en tiempo real con WebSockets.
+- Pruebas de aislamiento de base de datos: Verificar que el usuario A de Empresa 1 no puede leer mensajes de Empresa 2 mediante manipulación de IDs.
+- Pruebas de firma de Webhooks: Simular payloads de Meta con firmas correctas e incorrectas.
+- Pruebas de concurrencia: Dos agentes intentando asignar la misma conversación simultáneamente (Optimistic Concurrency).
+- Pruebas de integración IMAP: Verificar que correos con adjuntos pesados se procesan y normalizan correctamente.
 
 ## Rationale
 
-- Se ha validado la viabilidad técnica utilizando FastAPI para la concurrencia asíncrona requerida por los webhooks y React 18 para la interfaz de usuario en tiempo real.
-- La arquitectura hexagonal garantiza el desacoplamiento de los proveedores de mensajería externos.
+- Se mantienen las tareas PENDING originales pero se detallan para incluir los patrones de diseño seleccionados (Adapter, Strategy).
+- La inclusión de Redis es necesaria tanto para la escalabilidad de WebSockets como para la gestión de tareas asíncronas de IMAP.
+- El esquema de base de datos separa 'Contact' de 'Customer' para satisfacer el Requirement 5 de fusión de identidades.
+- Se omite la creación de tareas completadas (T1, T2, T3) para centrar el esfuerzo en lo restante.
+
+## Warnings
+
+- La ventana de 24h de WhatsApp requiere un manejo de errores específico para notificar al agente que no puede responder sin plantillas.
+- El sondeo IMAP puede ser ineficiente si no se gestionan bien los flags de 'leído/no leído' en buzones con mucho tráfico.
 
 ## Assumptions
 
-- Se asume que las credenciales de acceso a las APIs de Meta, Telegram y Discord serán provistas mediante variables de entorno o configuración cifrada por empresa.
+- Se asume el uso de Redis para colas y WebSockets dada la naturaleza en tiempo real del proyecto.
+- Se asume que el cifrado de credenciales se realizará a nivel de aplicación antes de persistir en la DB.
 
 ## Memory changes
 
-- Aplicado: architecture/hierarchy.md — Definición completa de la jerarquía de archivos y estructura del proyecto para FastAPI y React.
+- Aplicado: contracts/schemas/database.json — Definición del esquema de base de datos requerido para el desarrollo de la lógica multi-tenant y de fusión de identidades.
+- Aplicado: architecture/hierarchy.md — Ampliación de la jerarquía para incluir workers y una estructura de carpetas más granular según la arquitectura hexagonal.

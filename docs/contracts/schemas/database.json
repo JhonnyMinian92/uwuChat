@@ -1,0 +1,397 @@
+{
+  "engine": "postgresql",
+  "summary": "Esquema multi-tenant para plataforma de chat unificado con soporte para múltiples canales y fusión de identidades.",
+  "tables": [
+    {
+      "name": "companies",
+      "description": "Entidad principal para cada tenant/empresa.",
+      "purpose": "Gestionar el aislamiento de datos y planes de suscripción.",
+      "usage": "Leída en cada petición para validar el contexto del tenant; escrita en el alta de empresa.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": true,
+          "default": "",
+          "description": "Identificador único de la empresa.",
+          "references": null
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "Nombre comercial.",
+          "references": null
+        },
+        {
+          "name": "settings",
+          "type": "jsonb",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "Configuraciones globales: horario, mensajes automáticos.",
+          "references": null
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "description": "Usuarios que acceden a la plataforma (agentes, supervisores, admins).",
+      "purpose": "Autenticación y autorización dentro de un tenant.",
+      "usage": "Leída en login y validación de permisos.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "company_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "companies",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": "cascade"
+          }
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": true,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "role",
+          "type": "enum",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "admin, supervisor, agent",
+          "references": null
+        }
+      ]
+    },
+    {
+      "name": "channels",
+      "description": "Configuración de conexiones externas (WhatsApp, Telegram, etc).",
+      "purpose": "Almacenar credenciales y estado de conexión por canal.",
+      "usage": "Leída por el motor de adaptadores para enviar mensajes.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "company_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "companies",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "provider",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "whatsapp, telegram, discord, imap",
+          "references": null
+        },
+        {
+          "name": "credentials_encrypted",
+          "type": "text",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "Credenciales cifradas en reposo.",
+          "references": null
+        }
+      ]
+    },
+    {
+      "name": "customers",
+      "description": "Identidad unificada de una persona física.",
+      "purpose": "Permitir que un cliente sea el mismo a través de varios canales.",
+      "usage": "",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "company_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "companies",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        }
+      ]
+    },
+    {
+      "name": "contacts",
+      "description": "Identidad técnica en un canal específico.",
+      "purpose": "Vincular un ID externo de un proveedor con un Customer interno.",
+      "usage": "",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "external_id",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "ID enviado por el proveedor (ej: número de teléfono o ID de Telegram).",
+          "references": null
+        },
+        {
+          "name": "channel_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "channels",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "customer_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "customers",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "conversations",
+      "description": "Hilos de chat entre un cliente y la empresa.",
+      "purpose": "Gestionar el estado y asignación de la atención.",
+      "usage": "",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "company_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "companies",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "customer_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "customers",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "open, pending, resolved",
+          "references": null
+        },
+        {
+          "name": "assigned_to",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "users",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "messages",
+      "description": "Cada entrada de texto o archivo en una conversación.",
+      "purpose": "Histórico de comunicaciones.",
+      "usage": "",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "conversation_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "conversations",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "direction",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "inbound, outbound",
+          "references": null
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "msg_type",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "text, image, audio, file",
+          "references": null
+        },
+        {
+          "name": "provider_msg_id",
+          "type": "string",
+          "primary_key": false,
+          "nullable": true,
+          "unique": true,
+          "default": "",
+          "description": "Para evitar duplicidad (idempotencia).",
+          "references": null
+        }
+      ]
+    }
+  ]
+}

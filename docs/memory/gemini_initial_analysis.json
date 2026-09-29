@@ -1,139 +1,164 @@
 {
   "contract_version": "1.1",
-  "request_id": "a77b8a64-f8cf-4a9d-8ee9-1dc0535aa6e5",
-  "project_memory_revision": 1,
+  "request_id": "520a5d91-e3e0-4260-a0d4-71b7d77dfdfc",
+  "project_memory_revision": 4,
   "status": "READY",
-  "summary": "Análisis inicial completado para uwuChat. Se ha estructurado el plan de implementación basado en arquitectura hexagonal, FastAPI para el backend, React 18 para el frontend, y adaptadores para la unificación de canales de mensajería (WhatsApp, Messenger, Instagram, Telegram, Discord, Email).",
+  "summary": "Análisis de preparación para uwuChat completado. Se han mantenido las tareas pendientes prioritarias y se han añadido tareas críticas para la infraestructura de tiempo real (WebSockets) y el procesamiento asíncrono necesario para el sondeo de correos y reintentos de webhooks. Se define el esquema de base de datos multi-tenant detallado para asegurar el aislamiento estricto.",
   "changes": [
-    "Uso de FastAPI (Python 3.12) para la API REST, manejo de webhooks e integración con canales.",
-    "Uso de React 18 con TypeScript para la interfaz web unificada.",
-    "Implementación de arquitectura hexagonal y patrones de repositorio, adaptador y estrategia."
+    "Incorporación de Redis como broker para Celery (procesamiento de correos IMAP y reintentos) y como Pub/Sub para WebSockets.",
+    "Definición explícita del modelo de fusión de identidades (Customer vs Contact) en la base de datos.",
+    "Refuerzo del esquema de seguridad para el cifrado de credenciales de canales (Requirement 3)."
   ],
   "tasks": [
     {
-      "key": "T1",
-      "title": "Configuración del proyecto backend con FastAPI y estructura hexagonal",
-      "description": "Inicializar el repositorio backend con Python 3.12 y FastAPI, configurando la estructura de carpetas siguiendo la arquitectura hexagonal (domain, application, ports, adapters/inbound, adapters/outbound). Configurar dependencias, linter y tipado estricto.",
-      "acceptance_criteria": [
-        "El servidor levanta correctamente con Uvicorn.",
-        "La estructura de directorios respeta los principios de arquitectura hexagonal.",
-        "El entorno de desarrollo está completamente documentado y funcional."
-      ],
-      "depends_on": [],
-      "story": "Infraestructura Base Backend"
-    },
-    {
-      "key": "T2",
-      "title": "Diseño y migración de base de datos multi-tenant",
-      "description": "Configurar la conexión a la base de datos con gestión de transacciones explícitas (Explicit Transaction Boundary) y concurrencia optimista (Optimistic Concurrency). Definir los modelos de datos para Empresas, Usuarios, Canales, Contactos, Conversaciones y Mensajes asegurando el aislamiento estricto de datos entre tenants.",
-      "acceptance_criteria": [
-        "Los modelos reflejan las relaciones requeridas sin fugas de datos entre empresas.",
-        "Se implementan migraciones de base de datos automatizadas.",
-        "Se aplican restricciones de aislamiento por tenant en las consultas."
-      ],
-      "depends_on": [
-        "T1"
-      ],
-      "story": "Gestión de Datos y Tenants"
-    },
-    {
-      "key": "T3",
-      "title": "Implementación del módulo de autenticación y autorización JWT",
-      "description": "Crear el sistema de autenticación basado en JWT con control de acceso basado en roles (RBAC) para administrador de empresa, supervisor y agente de atención, aplicando el principio de defensa en profundidad.",
-      "acceptance_criteria": [
-        "Endpoints de login y emisión de tokens seguros.",
-        "Middleware de validación de roles y aislamiento por empresa operativo.",
-        "Pruebas unitarias para los flujos de autenticación."
-      ],
-      "depends_on": [
-        "T2"
-      ],
-      "story": "Seguridad y Accesos"
-    },
-    {
       "key": "T4",
       "title": "Desarrollo del motor de adaptadores de canales de mensajería",
-      "description": "Implementar el patrón Strategy y Adapter para unificar la recepción y envío de mensajes de WhatsApp Cloud API, Facebook Messenger, Instagram Messaging, Telegram Bot API, Discord bot y correo IMAP/SMTP mediante una interfaz común.",
+      "description": "Implementar el patrón Strategy y Adapter en el backend para unificar la recepción y envío de mensajes. Debe incluir validadores de firma para Meta (X-Hub-Signature-256) y Telegram. Los adaptadores deben normalizar los payloads a un esquema de mensaje interno común.",
       "acceptance_criteria": [
-        "Normalización correcta de mensajes entrantes de cada canal a un modelo común.",
-        "Cifrado seguro de credenciales de canales en la base de datos.",
-        "Manejo de webhooks verificados por firma criptográfica."
+        "Adaptadores funcionales para WhatsApp, Telegram y Discord.",
+        "Validación de firmas criptográficas en webhooks de entrada.",
+        "Normalización de adjuntos (imágenes, audio) a una estructura común.",
+        "Uso de Idempotency Key basada en el ID de mensaje del proveedor externo."
+      ],
+      "depends_on": [],
+      "story": "Integración de Canales"
+    },
+    {
+      "key": "T7",
+      "title": "Infraestructura asíncrona y procesamiento de correo IMAP",
+      "description": "Configurar Celery con Redis para el sondeo periódico de buzones IMAP y el envío SMTP. Implementar lógica de reintentos con backoff exponencial para fallos en las APIs de los proveedores.",
+      "acceptance_criteria": [
+        "Sondeo IMAP funcional recuperando correos no leídos.",
+        "Cola de tareas para envío de mensajes salientes.",
+        "Mecanismo de reintento observable en logs ante fallos de red con proveedores."
       ],
       "depends_on": [
-        "T3"
+        "T4"
       ],
-      "story": "Integración de Canales"
+      "story": "Canal de Correo y Resiliencia"
     },
     {
       "key": "T5",
       "title": "Construcción de la bandeja unificada en React 18",
-      "description": "Desarrollar la interfaz web en React 18 con TypeScript utilizando componentes contenedores y presentacionales. Incluir lista de conversaciones, filtros avanzados (modern filters), buscador con debounce y comunicación en tiempo real mediante WebSockets.",
+      "description": "Desarrollar la interfaz de chat en tiempo real utilizando WebSockets (FastAPI + Redis Pub/Sub). Implementar componentes de lista de conversaciones, buscador con debounce y filtros avanzados según los patrones de diseño seleccionados.",
       "acceptance_criteria": [
-        "Renderizado fluido de la bandeja con WebSockets integrados para mensajes en tiempo real.",
-        "Filtros combinables y buscador operativos con manejo de estado vacío.",
-        "Uso correcto de Skeleton loading para la carga de datos."
+        "Mensajes entrantes aparecen instantáneamente sin refrescar.",
+        "Buscador filtra contactos y mensajes con debounce de 300ms.",
+        "Skeleton loading aplicado durante la carga inicial de conversaciones.",
+        "Aislamiento visual: un agente solo ve datos de su propia empresa."
       ],
       "depends_on": [
-        "T3"
+        "T7"
       ],
-      "story": "Frontend y Bandeja Unificada"
+      "story": "Bandeja de Entrada"
+    },
+    {
+      "key": "T8",
+      "title": "Lógica de fusión de identidades y gestión de contactos",
+      "description": "Implementar el servicio de dominio para vincular múltiples 'Contactos' (canal+id) a un único 'Cliente' (Customer) mediante reglas de negocio o intervención manual del agente.",
+      "acceptance_criteria": [
+        "Posibilidad de unir un contacto de WhatsApp y uno de Telegram en un mismo perfil.",
+        "Historial unificado de mensajes en la vista de cliente fusionado.",
+        "Validación de que ambos contactos pertenecen a la misma empresa (tenant)."
+      ],
+      "depends_on": [
+        "T5"
+      ],
+      "story": "Gestión de Contactos"
     },
     {
       "key": "T6",
       "title": "Panel de administración y métricas por empresa",
-      "description": "Implementar las vistas y endpoints para la gestión de canales, agentes, horarios de atención, respuestas rápidas y el tablero de métricas de rendimiento (tiempo de primera respuesta, resolución, volumen).",
+      "description": "Crear el dashboard de métricas calculando tiempos de respuesta y volúmenes. Implementar la gestión de configuración de empresa: horarios, respuestas rápidas y roles de usuario.",
       "acceptance_criteria": [
-        "CRUD completo de configuración empresarial y agentes desde la UI.",
-        "Cálculo preciso de métricas por empresa, canal y agente.",
-        "Pruebas de integración para los flujos administrativos."
+        "Gráficos de volumen de mensajes por canal/agente.",
+        "Configuración de horario de atención reflejada en mensajes automáticos.",
+        "CRUD de respuestas rápidas funcional en la bandeja de chat."
       ],
       "depends_on": [
-        "T4",
         "T5"
       ],
-      "story": "Administración y Métricas"
+      "story": "Administración y Business Intelligence"
     }
   ],
   "tests": [
-    "Pruebas unitarias de dominio para validar la lógica de enrutamiento y normalización de mensajes.",
-    "Pruebas de integración para verificar el aislamiento estricto de datos entre tenants en la base de datos.",
-    "Pruebas de seguridad para validar la verificación de firmas en webhooks de Meta y Telegram.",
-    "Pruebas end-to-end de la bandeja de chat en tiempo real con WebSockets."
+    "Pruebas de aislamiento de base de datos: Verificar que el usuario A de Empresa 1 no puede leer mensajes de Empresa 2 mediante manipulación de IDs.",
+    "Pruebas de firma de Webhooks: Simular payloads de Meta con firmas correctas e incorrectas.",
+    "Pruebas de concurrencia: Dos agentes intentando asignar la misma conversación simultáneamente (Optimistic Concurrency).",
+    "Pruebas de integración IMAP: Verificar que correos con adjuntos pesados se procesan y normalizan correctamente."
   ],
-  "questions": [],
+  "questions": [
+    {
+      "id": "Q1",
+      "question": "¿Cuál es la política de retención de mensajes y archivos adjuntos deseada?",
+      "why": "Impacta directamente en los costes de almacenamiento y en el diseño del purgado de la base de datos.",
+      "required": false,
+      "priority": "low",
+      "category": "data",
+      "blocks_activation": false
+    },
+    {
+      "id": "Q2",
+      "question": "¿Se requiere soporte para plantillas de WhatsApp (HSM) fuera de la ventana de 24 horas?",
+      "why": "El Requirement 8 menciona plantillas, pero el flujo de aprobación de Meta es complejo y requiere integración específica.",
+      "required": true,
+      "priority": "high",
+      "category": "business",
+      "blocks_activation": false
+    }
+  ],
   "memory_updates": [
+    {
+      "path": "contracts/schemas/database.json",
+      "content_type": "application/json",
+      "content": "{\"engine\":\"postgresql\",\"summary\":\"Esquema multi-tenant para plataforma de chat unificado con soporte para múltiples canales y fusión de identidades.\",\"tables\":[{\"name\":\"companies\",\"description\":\"Entidad principal para cada tenant/empresa.\",\"purpose\":\"Gestionar el aislamiento de datos y planes de suscripción.\",\"usage\":\"Leída en cada petición para validar el contexto del tenant; escrita en el alta de empresa.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true,\"nullable\":false,\"unique\":true,\"description\":\"Identificador único de la empresa.\"},{\"name\":\"name\",\"type\":\"string\",\"description\":\"Nombre comercial.\"},{\"name\":\"settings\",\"type\":\"jsonb\",\"description\":\"Configuraciones globales: horario, mensajes automáticos.\"}]},{\"name\":\"users\",\"description\":\"Usuarios que acceden a la plataforma (agentes, supervisores, admins).\",\"purpose\":\"Autenticación y autorización dentro de un tenant.\",\"usage\":\"Leída en login y validación de permisos.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true,\"nullable\":false},{\"name\":\"company_id\",\"type\":\"uuid\",\"references\":{\"table\":\"companies\",\"column\":\"id\",\"cardinality\":\"many-to-one\",\"on_delete\":\"cascade\"}},{\"name\":\"email\",\"type\":\"string\",\"unique\":true},{\"name\":\"role\",\"type\":\"enum\",\"description\":\"admin, supervisor, agent\"}]},{\"name\":\"channels\",\"description\":\"Configuración de conexiones externas (WhatsApp, Telegram, etc).\",\"purpose\":\"Almacenar credenciales y estado de conexión por canal.\",\"usage\":\"Leída por el motor de adaptadores para enviar mensajes.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true},{\"name\":\"company_id\",\"type\":\"uuid\",\"references\":{\"table\":\"companies\",\"column\":\"id\"}},{\"name\":\"provider\",\"type\":\"string\",\"description\":\"whatsapp, telegram, discord, imap\"},{\"name\":\"credentials_encrypted\",\"type\":\"text\",\"description\":\"Credenciales cifradas en reposo.\"}]},{\"name\":\"customers\",\"description\":\"Identidad unificada de una persona física.\",\"purpose\":\"Permitir que un cliente sea el mismo a través de varios canales.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true},{\"name\":\"company_id\",\"type\":\"uuid\",\"references\":{\"table\":\"companies\",\"column\":\"id\"}},{\"name\":\"name\",\"type\":\"string\"}]},{\"name\":\"contacts\",\"description\":\"Identidad técnica en un canal específico.\",\"purpose\":\"Vincular un ID externo de un proveedor con un Customer interno.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true},{\"name\":\"external_id\",\"type\":\"string\",\"description\":\"ID enviado por el proveedor (ej: número de teléfono o ID de Telegram).\"},{\"name\":\"channel_id\",\"type\":\"uuid\",\"references\":{\"table\":\"channels\",\"column\":\"id\"}},{\"name\":\"customer_id\",\"type\":\"uuid\",\"references\":{\"table\":\"customers\",\"column\":\"id\"}}]},{\"name\":\"conversations\",\"description\":\"Hilos de chat entre un cliente y la empresa.\",\"purpose\":\"Gestionar el estado y asignación de la atención.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true},{\"name\":\"company_id\",\"type\":\"uuid\",\"references\":{\"table\":\"companies\",\"column\":\"id\"}},{\"name\":\"customer_id\",\"type\":\"uuid\",\"references\":{\"table\":\"customers\",\"column\":\"id\"}},{\"name\":\"status\",\"type\":\"string\",\"description\":\"open, pending, resolved\"},{\"name\":\"assigned_to\",\"type\":\"uuid\",\"nullable\":true,\"references\":{\"table\":\"users\",\"column\":\"id\"}}]},{\"name\":\"messages\",\"description\":\"Cada entrada de texto o archivo en una conversación.\",\"purpose\":\"Histórico de comunicaciones.\",\"columns\":[{\"name\":\"id\",\"type\":\"uuid\",\"primary_key\":true},{\"name\":\"conversation_id\",\"type\":\"uuid\",\"references\":{\"table\":\"conversations\",\"column\":\"id\"}},{\"name\":\"direction\",\"type\":\"string\",\"description\":\"inbound, outbound\"},{\"name\":\"content\",\"type\":\"text\"},{\"name\":\"msg_type\",\"type\":\"string\",\"description\":\"text, image, audio, file\"},{\"name\":\"provider_msg_id\",\"type\":\"string\",\"unique\":true,\"description\":\"Para evitar duplicidad (idempotencia).\"}]}]}",
+      "base_sha": "",
+      "reason": "Definición del esquema de base de datos requerido para el desarrollo de la lógica multi-tenant y de fusión de identidades.",
+      "update": ""
+    },
     {
       "path": "architecture/hierarchy.md",
       "content_type": "text/markdown",
-      "content": "",
-      "base_sha": "a7afe0fa90dfb5182f920a9cb0ad73e418592956ae2cb09082fcb880899b0be0",
-      "reason": "Definición completa de la jerarquía de archivos y estructura del proyecto para FastAPI y React.",
-      "update": "# File and Directory Hierarchy\n\n- `/backend`: API FastAPI, adaptadores y lógica de negocio.\n  - `domain/`: Entidades y casos de uso principales.\n  - `ports/`: Interfaces de entrada y salida.\n  - `adapters/`: Implementaciones concretas (webhooks, base de datos, canales).\n- `/frontend`: Aplicación web React 18 con TypeScript.\n  - `components/`: Componentes presentacionales y contenedores.\n  - `services/`: Comunicación con la API REST y WebSockets."
+      "content": "# File and Directory Hierarchy\n\n## Backend (FastAPI)\n- `app/` \n  - `domain/`: Entidades de negocio (Message, Conversation, Customer) y lógica pura.\n  - `application/`: Casos de uso (SendMessage, RouteMessage, MergeCustomers).\n  - `ports/`: Definición de interfaces (RepositoryInterface, ChannelAdapterInterface).\n  - `adapters/` \n    - `inbound/`: Controladores REST, Webhooks y sus validadores de firma.\n    - `outbound/`: Implementación de base de datos (SQLAlchemy/Tortoise) y clientes de APIs (Meta, Telegram).\n  - `workers/`: Tareas de Celery para sondeo IMAP y envío asíncrono.\n  - `core/`: Configuración, seguridad (JWT), cifrado y middleware de tenant.\n\n## Frontend (React + TS)\n- `src/` \n  - `api/`: Cliente de servicios y configuración de WebSockets.\n  - `components/` \n    - `layout/`: Estructura general de la bandeja.\n    - `chat/`: Burbujas de mensaje, input, lista de conversaciones.\n    - `admin/`: Paneles de configuración de canales y métricas.\n  - `hooks/`: Gestión de estado local y suscripciones a tiempo real.\n  - `types/`: Definiciones TypeScript compartidas.",
+      "base_sha": "e02a067db303a4e05c92889cb1c41e44617035dee49ed84200039aa1c2750b84",
+      "reason": "Ampliación de la jerarquía para incluir workers y una estructura de carpetas más granular según la arquitectura hexagonal.",
+      "update": ""
     }
   ],
   "rationale": [
-    "Se ha validado la viabilidad técnica utilizando FastAPI para la concurrencia asíncrona requerida por los webhooks y React 18 para la interfaz de usuario en tiempo real.",
-    "La arquitectura hexagonal garantiza el desacoplamiento de los proveedores de mensajería externos."
+    "Se mantienen las tareas PENDING originales pero se detallan para incluir los patrones de diseño seleccionados (Adapter, Strategy).",
+    "La inclusión de Redis es necesaria tanto para la escalabilidad de WebSockets como para la gestión de tareas asíncronas de IMAP.",
+    "El esquema de base de datos separa 'Contact' de 'Customer' para satisfacer el Requirement 5 de fusión de identidades.",
+    "Se omite la creación de tareas completadas (T1, T2, T3) para centrar el esfuerzo en lo restante."
   ],
-  "warnings": [],
+  "warnings": [
+    "La ventana de 24h de WhatsApp requiere un manejo de errores específico para notificar al agente que no puede responder sin plantillas.",
+    "El sondeo IMAP puede ser ineficiente si no se gestionan bien los flags de 'leído/no leído' en buzones con mucho tráfico."
+  ],
   "missing_information": [],
   "assumptions": [
-    "Se asume que las credenciales de acceso a las APIs de Meta, Telegram y Discord serán provistas mediante variables de entorno o configuración cifrada por empresa."
+    "Se asume el uso de Redis para colas y WebSockets dada la naturaleza en tiempo real del proyecto.",
+    "Se asume que el cifrado de credenciales se realizará a nivel de aplicación antes de persistir en la DB."
   ],
   "validation": {
     "contract_version": "1.1",
-    "memory_revision": 1,
+    "memory_revision": 4,
     "status": "READY",
     "accepted": [
       {
+        "path": "contracts/schemas/database.json",
+        "operation": "CREATE_JSON",
+        "reason": "Definición del esquema de base de datos requerido para el desarrollo de la lógica multi-tenant y de fusión de identidades."
+      },
+      {
         "path": "architecture/hierarchy.md",
         "operation": "UPSERT_FILE",
-        "reason": "Definición completa de la jerarquía de archivos y estructura del proyecto para FastAPI y React."
+        "reason": "Ampliación de la jerarquía para incluir workers y una estructura de carpetas más granular según la arquitectura hexagonal."
       }
     ],
     "rejected": [],
-    "questions": 0,
+    "questions": 2,
     "blocking_questions": 0,
-    "tasks": 6
+    "tasks": 5
   }
 }

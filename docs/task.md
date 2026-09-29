@@ -11,6 +11,14 @@ este archivo es una foto del plan en el momento de la última publicación.
   - Criterio: El entorno de desarrollo está completamente documentado y funcional.
   - Bug: Los tests del backend no se pueden ejecutar (completada)
 
+## Integración de Canales
+
+- [ ] **Desarrollo del motor de adaptadores de canales de mensajería** (pendiente)
+  - Criterio: Adaptadores funcionales para WhatsApp, Telegram y Discord.
+  - Criterio: Validación de firmas criptográficas en webhooks de entrada.
+  - Criterio: Normalización de adjuntos (imágenes, audio) a una estructura común.
+  - Criterio: Uso de Idempotency Key basada en el ID de mensaje del proveedor externo.
+
 ## Gestión de Datos y Tenants
 
 - [x] **Diseño y migración de base de datos multi-tenant** (completada)
@@ -18,6 +26,23 @@ este archivo es una foto del plan en el momento de la última publicación.
   - Criterio: Los modelos reflejan las relaciones requeridas sin fugas de datos entre empresas.
   - Criterio: Se implementan migraciones de base de datos automatizadas.
   - Criterio: Se aplican restricciones de aislamiento por tenant en las consultas.
+
+## Canal de Correo y Resiliencia
+
+- [ ] **Infraestructura asíncrona y procesamiento de correo IMAP** (pendiente)
+  - Depende de: Desarrollo del motor de adaptadores de canales de mensajería
+  - Criterio: Sondeo IMAP funcional recuperando correos no leídos.
+  - Criterio: Cola de tareas para envío de mensajes salientes.
+  - Criterio: Mecanismo de reintento observable en logs ante fallos de red con proveedores.
+
+## Bandeja de Entrada
+
+- [ ] **Construcción de la bandeja unificada en React 18** (pendiente)
+  - Depende de: Infraestructura asíncrona y procesamiento de correo IMAP
+  - Criterio: Mensajes entrantes aparecen instantáneamente sin refrescar.
+  - Criterio: Buscador filtra contactos y mensajes con debounce de 300ms.
+  - Criterio: Skeleton loading aplicado durante la carga inicial de conversaciones.
+  - Criterio: Aislamiento visual: un agente solo ve datos de su propia empresa.
 
 ## Seguridad y Accesos
 
@@ -27,26 +52,18 @@ este archivo es una foto del plan en el momento de la última publicación.
   - Criterio: Middleware de validación de roles y aislamiento por empresa operativo.
   - Criterio: Pruebas unitarias para los flujos de autenticación.
 
-## Integración de Canales
+## Gestión de Contactos
 
-- [ ] **Desarrollo del motor de adaptadores de canales de mensajería** (pendiente)
-  - Depende de: Implementación del módulo de autenticación y autorización JWT
-  - Criterio: Normalización correcta de mensajes entrantes de cada canal a un modelo común.
-  - Criterio: Cifrado seguro de credenciales de canales en la base de datos.
-  - Criterio: Manejo de webhooks verificados por firma criptográfica.
+- [ ] **Lógica de fusión de identidades y gestión de contactos** (pendiente)
+  - Depende de: Construcción de la bandeja unificada en React 18
+  - Criterio: Posibilidad de unir un contacto de WhatsApp y uno de Telegram en un mismo perfil.
+  - Criterio: Historial unificado de mensajes en la vista de cliente fusionado.
+  - Criterio: Validación de que ambos contactos pertenecen a la misma empresa (tenant).
 
-## Frontend y Bandeja Unificada
-
-- [ ] **Construcción de la bandeja unificada en React 18** (pendiente)
-  - Depende de: Implementación del módulo de autenticación y autorización JWT
-  - Criterio: Renderizado fluido de la bandeja con WebSockets integrados para mensajes en tiempo real.
-  - Criterio: Filtros combinables y buscador operativos con manejo de estado vacío.
-  - Criterio: Uso correcto de Skeleton loading para la carga de datos.
-
-## Administración y Métricas
+## Administración y Business Intelligence
 
 - [ ] **Panel de administración y métricas por empresa** (pendiente)
-  - Depende de: Desarrollo del motor de adaptadores de canales de mensajería, Construcción de la bandeja unificada en React 18
-  - Criterio: CRUD completo de configuración empresarial y agentes desde la UI.
-  - Criterio: Cálculo preciso de métricas por empresa, canal y agente.
-  - Criterio: Pruebas de integración para los flujos administrativos.
+  - Depende de: Construcción de la bandeja unificada en React 18
+  - Criterio: Gráficos de volumen de mensajes por canal/agente.
+  - Criterio: Configuración de horario de atención reflejada en mensajes automáticos.
+  - Criterio: CRUD de respuestas rápidas funcional en la bandeja de chat.
