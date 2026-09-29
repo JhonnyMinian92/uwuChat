@@ -68,3 +68,11 @@ More unit tests usually improve speed and diagnosis, while integration and end-t
 - Pruebas de plantillas WhatsApp (HSM): Validar el comportamiento de envío fuera de la ventana de 24 horas usando plantillas genéricas.
 - Pruebas de concurrencia y conflictos en la asignación de conversaciones.
 
+## Tests required by Gemini
+
+- Pruebas de aislamiento multi-tenant: Verificar que usuarios de Empresa A no pueden acceder a datos, mensajes ni conversaciones de Empresa B vía API o WebSockets.
+- Pruebas de retención y purgado (72h): Verificar que la tarea de limpieza elimina mensajes y adjuntos activos tras 72 horas y que estos pueden reconstruirse desde audit_logs.
+- Pruebas de verificación criptográfica: Comprobar rechazo de webhooks con firma HMAC inválida para Meta y token erróneo en Telegram.
+- Pruebas de plantillas WhatsApp (HSM): Validar el bloqueo de mensajes libres fuera de las 24 horas y permitir el despacho exitoso mediante plantilla aprobada.
+- Pruebas de concurrencia y asignación: Validar la asignación de conversaciones usando Optimistic Concurrency para prevenir sobrescrituras entre agentes.
+

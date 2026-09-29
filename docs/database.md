@@ -400,3 +400,4 @@ This approach avoids long locks and often improves throughput, but conflicts req
 ## Example decision signals
 Prefer this pattern when edits are short-lived and conflicts are possible but relatively infrequent.
 
+Obsoleto: no lo uses, usa content.

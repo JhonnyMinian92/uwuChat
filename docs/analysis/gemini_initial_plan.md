@@ -1,73 +1,78 @@
 # Gemini Initial Plan
 
-Análisis de preparación para uwuChat completado. Se han mantenido las tareas pendientes prioritarias y se han añadido tareas críticas para la infraestructura de tiempo real (WebSockets) y el procesamiento asíncrono necesario para el sondeo de correos y reintentos de webhooks. Se define el esquema de base de datos multi-tenant detallado para asegurar el aislamiento estricto.
+Preparación y gobierno del proyecto uwuChat finalizada con éxito. Se preservan las tareas pendientes requeridas alineadas a la arquitectura hexagonal, patrones de concurrencia y límites transaccionales. El modelo de datos en contracts/schemas/database.json y database.md se mantiene consistente incorporando la política de purgado y retención a 72 horas con persistencia permanente en audit_logs, junto con el soporte de plantillas HSM para WhatsApp.
 
 ## Changes
 
-- Incorporación de Redis como broker para Celery (procesamiento de correos IMAP y reintentos) y como Pub/Sub para WebSockets.
-- Definición explícita del modelo de fusión de identidades (Customer vs Contact) en la base de datos.
-- Refuerzo del esquema de seguridad para el cifrado de credenciales de canales (Requirement 3).
+- Alineación formal del esquema de base de datos en database.json y database.md reflejando la tabla audit_logs inmutable y la tabla hsm_templates para WhatsApp fuera de la ventana de 24 horas.
+- Reflejo de la política de retención de 72 horas para mensajes y adjuntos activos con purga automática y respaldo estructurado en logs de auditoría permanentes.
 
 ## Tasks
 
 - **T4** Desarrollo del motor de adaptadores de canales de mensajería
   - Historia: Integración de Canales
-  - Implementar el patrón Strategy y Adapter en el backend para unificar la recepción y envío de mensajes. Debe incluir validadores de firma para Meta (X-Hub-Signature-256) y Telegram. Los adaptadores deben normalizar los payloads a un esquema de mensaje interno común.
-  - [ ] Adaptadores funcionales para WhatsApp, Telegram y Discord.
-  - [ ] Validación de firmas criptográficas en webhooks de entrada.
-  - [ ] Normalización de adjuntos (imágenes, audio) a una estructura común.
-  - [ ] Uso de Idempotency Key basada en el ID de mensaje del proveedor externo.
+  - Implementar en el backend (FastAPI, Python 3.12) el patrón Strategy y Adapter para unificar la recepción y envío de mensajes multicanal (WhatsApp Cloud API, Messenger, Instagram Messaging, Telegram Bot API, Discord bot). Validar firmas criptográficas (Meta X-Hub-Signature-256, secreto de Telegram) y procesar mensajes entrantes de forma idempotente con deduplicación por provider_msg_id. Incluir soporte para envío de plantillas genéricas (HSM) de WhatsApp para conversaciones fuera de la ventana de 24 horas.
+  - [ ] Adaptadores funcionales y desacoplados para WhatsApp, Facebook Messenger, Instagram, Telegram y Discord siguiendo arquitectura hexagonal.
+  - [ ] Validación estricta de firmas criptográficas en webhooks de entrada rechazando peticiones con firma inválida.
+  - [ ] Normalización de mensajes entrantes (texto, imágenes, audio y archivos adjuntos) al contrato de dominio unificado.
+  - [ ] Deduplicación idempotente usando provider_msg_id.
+  - [ ] Soporte para el envío de plantillas HSM preaprobadas cuando se supere la ventana de 24 horas de WhatsApp.
 - **T7** Infraestructura asíncrona y procesamiento de correo IMAP (depende de: T4)
   - Historia: Canal de Correo y Resiliencia
-  - Configurar Celery con Redis para el sondeo periódico de buzones IMAP y el envío SMTP. Implementar lógica de reintentos con backoff exponencial para fallos en las APIs de los proveedores.
-  - [ ] Sondeo IMAP funcional recuperando correos no leídos.
-  - [ ] Cola de tareas para envío de mensajes salientes.
-  - [ ] Mecanismo de reintento observable en logs ante fallos de red con proveedores.
+  - Configurar infraestructura asíncrona con Celery y Redis para el sondeo periódico de buzones de correo por IMAP y el envío mediante SMTP. Implementar reintentos con backoff exponencial para llamadas a proveedores externos. Implementar la tarea periódica de purgado para eliminar mensajes y archivos adjuntos con más de 72 horas del almacenamiento activo, garantizando la persistencia del histórico completo estructurado en la tabla audit_logs.
+  - [ ] Worker Celery configurado con sondeo IMAP periódico que extrae mensajes y adjuntos y los normaliza en conversaciones.
+  - [ ] Mecanismo de envío SMTP con reintentos bounded backoff ante fallos transitorios.
+  - [ ] Tarea periódica de purgado que elimina mensajes y adjuntos activos de más de 72 horas preservando registros estructurados inmutables en audit_logs.
+  - [ ] Consulta eficiente de auditoría por rangos de fechas y usuario para reconstrucción histórica.
 - **T5** Construcción de la bandeja unificada en React 18 (depende de: T7)
   - Historia: Bandeja de Entrada
-  - Desarrollar la interfaz de chat en tiempo real utilizando WebSockets (FastAPI + Redis Pub/Sub). Implementar componentes de lista de conversaciones, buscador con debounce y filtros avanzados según los patrones de diseño seleccionados.
-  - [ ] Mensajes entrantes aparecen instantáneamente sin refrescar.
-  - [ ] Buscador filtra contactos y mensajes con debounce de 300ms.
-  - [ ] Skeleton loading aplicado durante la carga inicial de conversaciones.
-  - [ ] Aislamiento visual: un agente solo ve datos de su propia empresa.
+  - Construir en React 18 con TypeScript la bandeja de entrada unificada de atención al cliente. Implementar conexión en tiempo real con WebSockets (FastAPI + Redis Pub/Sub) para recibir y enviar mensajes instantáneamente. Integrar lista de conversaciones con filtros combinables (por canal, estado y agente), buscador con debounce de 300ms, y skeleton loading durante la carga de conversaciones. Asegurar el aislamiento estricto de datos por tenant en la interfaz.
+  - [ ] Bandeja de entrada web unificada con visualización y envío en tiempo real vía WebSocket.
+  - [ ] Buscador de conversaciones y contactos con debounce de 300ms y resaltado de coincidencias.
+  - [ ] Filtros modernos combinables reflejando estado y aislamiento visual garantizado por tenant.
+  - [ ] Skeleton loading visible durante la obtención de conversaciones y mensajes.
+  - [ ] Advertencia visual en la UI cuando una conversación de WhatsApp supere la ventana de 24 horas, habilitando selector de plantillas HSM.
 - **T8** Lógica de fusión de identidades y gestión de contactos (depende de: T5)
   - Historia: Gestión de Contactos
-  - Implementar el servicio de dominio para vincular múltiples 'Contactos' (canal+id) a un único 'Cliente' (Customer) mediante reglas de negocio o intervención manual del agente.
-  - [ ] Posibilidad de unir un contacto de WhatsApp y uno de Telegram en un mismo perfil.
-  - [ ] Historial unificado de mensajes en la vista de cliente fusionado.
-  - [ ] Validación de que ambos contactos pertenecen a la misma empresa (tenant).
+  - Implementar el servicio de dominio y los endpoints para gestionar clientes y contactos técnicos multicanal. Permitir la vinculación y fusión (merge) de múltiples registros de 'contacts' (canal + id externo) a un único registro de 'customers'. Garantizar que las fusiones sólo puedan realizarse entre contactos pertenecientes a la misma empresa (tenant) y actualizar las conversaciones asociadas de forma consistente dentro de una transacción explícita.
+  - [ ] Mapeo de múltiples contactos (WhatsApp, Telegram, correo, etc.) a un único Customer dentro del mismo tenant.
+  - [ ] Endpoint transaccional para fusionar identidades con validación de aislamiento multi-tenant.
+  - [ ] Visualización del historial unificado de mensajes en la vista de cliente fusionado.
+  - [ ] Manejo de concurrencia optimista para evitar condiciones de carrera durante la fusión simultánea.
 - **T6** Panel de administración y métricas por empresa (depende de: T5)
   - Historia: Administración y Business Intelligence
-  - Crear el dashboard de métricas calculando tiempos de respuesta y volúmenes. Implementar la gestión de configuración de empresa: horarios, respuestas rápidas y roles de usuario.
-  - [ ] Gráficos de volumen de mensajes por canal/agente.
-  - [ ] Configuración de horario de atención reflejada en mensajes automáticos.
-  - [ ] CRUD de respuestas rápidas funcional en la bandeja de chat.
+  - Desarrollar el panel de administración multi-tenant en React y FastAPI. Permitir la gestión de canales (registro de credenciales cifradas), configuración de horarios de atención con mensajes automáticos fuera de horario, CRUD de respuestas rápidas y gestión del catálogo de plantillas HSM. Crear el dashboard de métricas calculando tiempo de primera respuesta, tiempo de resolución y volumen de conversaciones por canal y por agente.
+  - [ ] CRUD seguro para configuración de canales con credenciales cifradas en reposo.
+  - [ ] Configuración de horarios de atención y envío automático de mensajes fuera de horario.
+  - [ ] Gestión de respuestas rápidas y catálogo de plantillas HSM aprobadas para agentes.
+  - [ ] Dashboard con métricas de tiempo de primera respuesta, tiempo de resolución y volumen por agente/canal filtrable por rango de fechas.
 
 ## Tests
 
-- Pruebas de aislamiento de base de datos: Verificar que el usuario A de Empresa 1 no puede leer mensajes de Empresa 2 mediante manipulación de IDs.
-- Pruebas de firma de Webhooks: Simular payloads de Meta con firmas correctas e incorrectas.
-- Pruebas de concurrencia: Dos agentes intentando asignar la misma conversación simultáneamente (Optimistic Concurrency).
-- Pruebas de integración IMAP: Verificar que correos con adjuntos pesados se procesan y normalizan correctamente.
+- Pruebas de aislamiento multi-tenant: Verificar que usuarios de Empresa A no pueden acceder a datos, mensajes ni conversaciones de Empresa B vía API o WebSockets.
+- Pruebas de retención y purgado (72h): Verificar que la tarea de limpieza elimina mensajes y adjuntos activos tras 72 horas y que estos pueden reconstruirse desde audit_logs.
+- Pruebas de verificación criptográfica: Comprobar rechazo de webhooks con firma HMAC inválida para Meta y token erróneo en Telegram.
+- Pruebas de plantillas WhatsApp (HSM): Validar el bloqueo de mensajes libres fuera de las 24 horas y permitir el despacho exitoso mediante plantilla aprobada.
+- Pruebas de concurrencia y asignación: Validar la asignación de conversaciones usando Optimistic Concurrency para prevenir sobrescrituras entre agentes.
 
 ## Rationale
 
-- Se mantienen las tareas PENDING originales pero se detallan para incluir los patrones de diseño seleccionados (Adapter, Strategy).
-- La inclusión de Redis es necesaria tanto para la escalabilidad de WebSockets como para la gestión de tareas asíncronas de IMAP.
-- El esquema de base de datos separa 'Contact' de 'Customer' para satisfacer el Requirement 5 de fusión de identidades.
-- Se omite la creación de tareas completadas (T1, T2, T3) para centrar el esfuerzo en lo restante.
+- Se preservan de forma idéntica los títulos de las 5 tareas PENDING existentes en current_tasks sin repetir las tareas ya completadas.
+- Las respuestas a Q1 (retención 72h con respaldo permanente en audit_logs) y Q2 (plantillas HSM genéricas) han sido incorporadas formalmente en los contratos de base de datos y criterios de aceptación.
+- El estatus es READY dado que no existen preguntas bloqueantes ni ambigüedades pendientes para iniciar la ejecución.
 
 ## Warnings
 
-- La ventana de 24h de WhatsApp requiere un manejo de errores específico para notificar al agente que no puede responder sin plantillas.
-- El sondeo IMAP puede ser ineficiente si no se gestionan bien los flags de 'leído/no leído' en buzones con mucho tráfico.
+- El purgado periódico de mensajes a las 72 horas debe ejecutarse por lotes controlados para evitar bloqueos en la base de datos de producción.
+- Las llamadas salientes a la API de WhatsApp deben verificar la ventana de 24 horas antes de intentar enviar texto libre para evitar penalizaciones del proveedor.
 
 ## Assumptions
 
-- Se asume el uso de Redis para colas y WebSockets dada la naturaleza en tiempo real del proyecto.
-- Se asume que el cifrado de credenciales se realizará a nivel de aplicación antes de persistir en la DB.
+- Se asume el uso de Redis como message broker para Celery y capa Pub/Sub para la distribución de eventos WebSocket.
+- Se asume que el cifrado de credenciales de canales se realiza a nivel de aplicación con AES-256-GCM antes de persistir en PostgreSQL.
 
 ## Memory changes
 
-- Aplicado: contracts/schemas/database.json — Definición del esquema de base de datos requerido para el desarrollo de la lógica multi-tenant y de fusión de identidades.
-- Aplicado: architecture/hierarchy.md — Ampliación de la jerarquía para incluir workers y una estructura de carpetas más granular según la arquitectura hexagonal.
+- Aplicado: contracts/schemas/database.md — Actualización de la documentación Markdown del esquema de base de datos para concordar exactamente con database.json y reflejar las reglas de retención y plantillas.
+- Aplicado: architecture/hierarchy.md — Completar la jerarquía de directorios requerida según la arquitectura hexagonal, FastAPI y React 18 seleccionados.
+- Rechazado: contracts/schemas/database.json — un JSON no se puede anexar: envía el documento completo

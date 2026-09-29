@@ -19,3 +19,8 @@ Record mandatory technical, business, security, compatibility and operational co
 - Se incorpora formalmente la política de retención de 72 horas para adjuntos y mensajes con persistencia de logs de auditoría estructurados.
 - Se añade el flujo de gestión y envío de plantillas genéricas (HSM) para WhatsApp fuera de la ventana de 24 horas.
 
+## Gemini proposed changes
+
+- Alineación formal del esquema de base de datos en database.json y database.md reflejando la tabla audit_logs inmutable y la tabla hsm_templates para WhatsApp fuera de la ventana de 24 horas.
+- Reflejo de la política de retención de 72 horas para mensajes y adjuntos activos con purga automática y respaldo estructurado en logs de auditoría permanentes.
+
