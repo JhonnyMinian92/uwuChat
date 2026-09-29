@@ -5,14 +5,15 @@ este archivo es una foto del plan en el momento de la última publicación.
 
 ## Infraestructura Base Backend
 
-- [ ] **Configuración del proyecto backend con FastAPI y estructura hexagonal** (pendiente)
+- [x] **Configuración del proyecto backend con FastAPI y estructura hexagonal** (completada)
   - Criterio: El servidor levanta correctamente con Uvicorn.
   - Criterio: La estructura de directorios respeta los principios de arquitectura hexagonal.
   - Criterio: El entorno de desarrollo está completamente documentado y funcional.
+  - Bug: Los tests del backend no se pueden ejecutar (completada)
 
 ## Gestión de Datos y Tenants
 
-- [ ] **Diseño y migración de base de datos multi-tenant** (pendiente)
+- [x] **Diseño y migración de base de datos multi-tenant** (completada)
   - Depende de: Configuración del proyecto backend con FastAPI y estructura hexagonal
   - Criterio: Los modelos reflejan las relaciones requeridas sin fugas de datos entre empresas.
   - Criterio: Se implementan migraciones de base de datos automatizadas.
@@ -20,7 +21,7 @@ este archivo es una foto del plan en el momento de la última publicación.
 
 ## Seguridad y Accesos
 
-- [ ] **Implementación del módulo de autenticación y autorización JWT** (pendiente)
+- [x] **Implementación del módulo de autenticación y autorización JWT** (completada)
   - Depende de: Diseño y migración de base de datos multi-tenant
   - Criterio: Endpoints de login y emisión de tokens seguros.
   - Criterio: Middleware de validación de roles y aislamiento por empresa operativo.
