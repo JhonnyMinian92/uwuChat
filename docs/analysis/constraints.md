@@ -14,3 +14,8 @@ Record mandatory technical, business, security, compatibility and operational co
 - Definición explícita del modelo de fusión de identidades (Customer vs Contact) en la base de datos.
 - Refuerzo del esquema de seguridad para el cifrado de credenciales de canales (Requirement 3).
 
+## Gemini proposed changes
+
+- Se incorpora formalmente la política de retención de 72 horas para adjuntos y mensajes con persistencia de logs de auditoría estructurados.
+- Se añade el flujo de gestión y envío de plantillas genéricas (HSM) para WhatsApp fuera de la ventana de 24 horas.
+

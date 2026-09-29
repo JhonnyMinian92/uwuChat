@@ -1,33 +1,10 @@
 {
   "catalog": {
-    "language": [
-      "languages/python.md",
-      "languages/typescript.md"
-    ],
-    "version": [
-      "versions/python-3.12.md",
-      "versions/react-18.md"
-    ],
-    "framework": [
-      "frameworks/fastapi.md",
-      "frameworks/react.md"
-    ],
-    "architecture": [
-      "architectures/hexagonal.md",
-      "architectures/adr.md"
-    ],
-    "database": [
-      "databases/transaction_boundary.md",
-      "databases/optimistic_concurrency.md"
-    ],
-    "design_pattern": [
-      "patterns/backend/adapter.md",
-      "patterns/backend/repository.md",
-      "patterns/backend/strategy.md",
-      "patterns/api/idempotency_key.md",
-      "patterns/api/pagination.md",
-      "patterns/error_handling/retry_with_backoff.md",
-      "patterns/frontend/container_presentational.md"
+    "qa": [
+      "qa/functional_testing_checklist.md",
+      "qa/security_review_checklist.md",
+      "qa/release_readiness_checklist.md",
+      "qa/performance_checklist.md"
     ],
     "role": [
       "roles/backend_developer/definition.md"
@@ -38,20 +15,49 @@
       "rules/document_after_change.md",
       "rules/no_hallucination.md"
     ],
-    "testing": [
-      "testing/test_pyramid.md"
-    ],
-    "security": [
-      "security/defense_in_depth.md"
-    ],
-    "qa": [
-      "qa/functional_testing_checklist.md",
-      "qa/security_review_checklist.md"
-    ],
     "design": [
       "design/search_bar.md",
       "design/modern_filters.md",
       "design/skeleton_loading.md"
+    ],
+    "testing": [
+      "testing/test_pyramid.md"
+    ],
+    "version": [
+      "versions/python-3.12.md",
+      "versions/react-18.md"
+    ],
+    "database": [
+      "databases/transaction_boundary.md",
+      "databases/optimistic_concurrency.md"
+    ],
+    "language": [
+      "languages/python.md",
+      "languages/typescript.md"
+    ],
+    "security": [
+      "security/defense_in_depth.md",
+      "security/zero_trust_boundary.md"
+    ],
+    "framework": [
+      "frameworks/fastapi.md",
+      "frameworks/react.md"
+    ],
+    "architecture": [
+      "architectures/hexagonal.md",
+      "architectures/adr.md"
+    ],
+    "design_pattern": [
+      "patterns/backend/adapter.md",
+      "patterns/backend/repository.md",
+      "patterns/backend/strategy.md",
+      "patterns/api/idempotency_key.md",
+      "patterns/api/pagination.md",
+      "patterns/error_handling/retry_with_backoff.md",
+      "patterns/frontend/container_presentational.md",
+      "patterns/authentication/implementation.md",
+      "patterns/integration/anti_corruption_layer.md",
+      "patterns/integration/outbox.md"
     ]
   }
 }

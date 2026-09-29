@@ -21,3 +21,24 @@
 - AuthN/AuthZ enforced server-side, not only in the UI.
 - No secrets in logs, commits or client-visible responses.
 
+
+
+## qa/release_readiness_checklist.md
+
+# Release readiness checklist
+
+- All required questions answered and no blocking pending items.
+- Migrations applied and reversible.
+- Rollback plan documented.
+
+
+
+## qa/performance_checklist.md
+
+# Performance checklist
+
+- Presupuesto de rendimiento definido (tiempo de respuesta, tamaño de bundle, uso de memoria) antes de liberar.
+- Pruebas de carga sobre los endpoints críticos, no solo pruebas funcionales.
+- Cuellos de botella identificados con perfilado, no adivinados.
+- Consultas N+1 y payloads no paginados revisados antes de producción.
+

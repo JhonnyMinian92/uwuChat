@@ -3,6 +3,14 @@
 Plan de implementación generado por Mnemosine. El estado vivo de cada tarea está en Mnemosine;
 este archivo es una foto del plan en el momento de la última publicación.
 
+## Integración de Canales
+
+- [ ] **Desarrollo del motor de adaptadores de canales de mensajería** (pendiente)
+  - Criterio: Adaptadores funcionales para WhatsApp, Telegram y Discord.
+  - Criterio: Validación de firmas criptográficas en webhooks de entrada.
+  - Criterio: Normalización de adjuntos a estructura común.
+  - Criterio: Gestión de envío de plantillas de WhatsApp (HSM) para flujos fuera de la ventana de 24 horas.
+
 ## Infraestructura Base Backend
 
 - [x] **Configuración del proyecto backend con FastAPI y estructura hexagonal** (completada)
@@ -10,14 +18,6 @@ este archivo es una foto del plan en el momento de la última publicación.
   - Criterio: La estructura de directorios respeta los principios de arquitectura hexagonal.
   - Criterio: El entorno de desarrollo está completamente documentado y funcional.
   - Bug: Los tests del backend no se pueden ejecutar (completada)
-
-## Integración de Canales
-
-- [ ] **Desarrollo del motor de adaptadores de canales de mensajería** (pendiente)
-  - Criterio: Adaptadores funcionales para WhatsApp, Telegram y Discord.
-  - Criterio: Validación de firmas criptográficas en webhooks de entrada.
-  - Criterio: Normalización de adjuntos (imágenes, audio) a una estructura común.
-  - Criterio: Uso de Idempotency Key basada en el ID de mensaje del proveedor externo.
 
 ## Gestión de Datos y Tenants
 
@@ -32,17 +32,8 @@ este archivo es una foto del plan en el momento de la última publicación.
 - [ ] **Infraestructura asíncrona y procesamiento de correo IMAP** (pendiente)
   - Depende de: Desarrollo del motor de adaptadores de canales de mensajería
   - Criterio: Sondeo IMAP funcional recuperando correos no leídos.
-  - Criterio: Cola de tareas para envío de mensajes salientes.
-  - Criterio: Mecanismo de reintento observable en logs ante fallos de red con proveedores.
-
-## Bandeja de Entrada
-
-- [ ] **Construcción de la bandeja unificada en React 18** (pendiente)
-  - Depende de: Infraestructura asíncrona y procesamiento de correo IMAP
-  - Criterio: Mensajes entrantes aparecen instantáneamente sin refrescar.
-  - Criterio: Buscador filtra contactos y mensajes con debounce de 300ms.
-  - Criterio: Skeleton loading aplicado durante la carga inicial de conversaciones.
-  - Criterio: Aislamiento visual: un agente solo ve datos de su propia empresa.
+  - Criterio: Cola de tareas para envío saliente con reintentos robustos.
+  - Criterio: Estructura de logs permanente para auditoría y recuperación por rangos de fecha y usuario.
 
 ## Seguridad y Accesos
 
@@ -52,18 +43,27 @@ este archivo es una foto del plan en el momento de la última publicación.
   - Criterio: Middleware de validación de roles y aislamiento por empresa operativo.
   - Criterio: Pruebas unitarias para los flujos de autenticación.
 
+## Bandeja de Entrada
+
+- [ ] **Construcción de la bandeja unificada en React 18** (pendiente)
+  - Depende de: Infraestructura asíncrona y procesamiento de correo IMAP
+  - Criterio: Mensajes entrantes aparecen instantáneamente sin refrescar.
+  - Criterio: Buscador filtra contactos y mensajes con debounce de 300ms.
+  - Criterio: Skeleton loading aplicado durante la carga inicial.
+  - Criterio: Aislamiento estricto de datos entre tenants.
+
 ## Gestión de Contactos
 
 - [ ] **Lógica de fusión de identidades y gestión de contactos** (pendiente)
   - Depende de: Construcción de la bandeja unificada en React 18
   - Criterio: Posibilidad de unir un contacto de WhatsApp y uno de Telegram en un mismo perfil.
   - Criterio: Historial unificado de mensajes en la vista de cliente fusionado.
-  - Criterio: Validación de que ambos contactos pertenecen a la misma empresa (tenant).
+  - Criterio: Validación de pertenencia al mismo tenant.
 
 ## Administración y Business Intelligence
 
 - [ ] **Panel de administración y métricas por empresa** (pendiente)
   - Depende de: Construcción de la bandeja unificada en React 18
   - Criterio: Gráficos de volumen de mensajes por canal/agente.
-  - Criterio: Configuración de horario de atención reflejada en mensajes automáticos.
-  - Criterio: CRUD de respuestas rápidas funcional en la bandeja de chat.
+  - Criterio: Configuración de horario de atención y respuestas automáticas.
+  - Criterio: Gestión de respuestas rápidas y plantillas en la bandeja.

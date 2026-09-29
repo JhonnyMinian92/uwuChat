@@ -4,6 +4,8 @@ Description: Chat multiempresa de atención al cliente que unifica WhatsApp, Fac
 Development type: both
 Application type: web
 Environments in scope: development, local, production
+Database: new (postgresql); the agent designs and creates it
+Database notes: Debe guardar todos los datos posibles y debe alojarlo todo de manera ordenada en sus  tablas. La base de datos sera local en ambiente local o desarrollo.
 
 Chat Multi Empresa para que los usuarios de Meta (WhatsApp, Facebook, Instagram) y los usuarios de otras aplicaciones como Telegram o Discord o correos electrónicos se puedan comunicar por atención al cliente con la empresa respectiva que desean o tienen el medio de contacto.
 

@@ -2,6 +2,27 @@
 
 Languages, versions and frameworks selected from Central Memory are listed below. Gemini may propose additions.
 
+# Reused Version from Central Memory
+
+
+## versions/python-3.12.md
+
+# Python 3.12
+
+Applies to: `languages/python.md`
+
+Current stable line with performance improvements and better error messages.
+
+
+
+## versions/react-18.md
+
+# React 18
+
+Applies to: `frameworks/react.md`, `frameworks/nextjs.md`
+
+Current stable major with concurrent rendering features.
+
 # Reused Language from Central Memory
 
 
@@ -38,27 +59,6 @@ Any JavaScript project that benefits from static typing: frontend apps, Node.js 
 ## Common pitfalls
 - Widespread use of `any` defeats the purpose of adopting TypeScript.
 - Type-only imports mixed with runtime imports can break tree-shaking if not marked with `import type`.
-
-# Reused Version from Central Memory
-
-
-## versions/python-3.12.md
-
-# Python 3.12
-
-Applies to: `languages/python.md`
-
-Current stable line with performance improvements and better error messages.
-
-
-
-## versions/react-18.md
-
-# React 18
-
-Applies to: `frameworks/react.md`, `frameworks/nextjs.md`
-
-Current stable major with concurrent rendering features.
 
 # Reused Framework from Central Memory
 

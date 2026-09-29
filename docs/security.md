@@ -52,3 +52,51 @@ Layering increases resilience but also complexity, latency, maintenance cost, an
 ## Example decision signals
 Prefer this pattern when a compromise of one control must not immediately expose the protected resource.
 
+
+## security/zero_trust_boundary.md
+
+# Zero Trust Boundary
+
+## Intent
+Treat every request crossing a trust boundary as untrusted until the required identity, authorization, integrity, and policy checks succeed.
+
+## Applicability
+Use for distributed systems, APIs, administrative functions, mobile backends, service-to-service calls, and any boundary protecting sensitive resources.
+
+## Non-applicability
+Do not interpret zero trust as requiring identical controls for every low-risk internal operation; controls should be proportional to the resource and threat model.
+
+## Structure / responsibilities
+- **Requester:** presents the minimum credentials or proof required by policy.
+- **Boundary:** authenticates and evaluates authorization, request integrity, and relevant policy.
+- **Resource service:** performs its own resource-level authorization rather than trusting upstream labels.
+- **Audit layer:** records security decisions and relevant failures without secrets.
+
+## Implementation guidance
+1. Enumerate trust boundaries and protected resources.
+2. Authenticate every boundary crossing that requires identity.
+3. Authorize the requested action against the actual resource and principal.
+4. Apply least privilege, explicit deny-by-default rules, and short-lived credentials where appropriate.
+5. Validate input and integrity before processing sensitive operations.
+6. Re-evaluate authorization after privilege or resource context changes.
+7. Log security decisions and monitor anomalous access.
+
+## Validation criteria
+- No protected resource depends solely on network location or an upstream trust assertion.
+- Unauthorized and cross-tenant/resource access attempts are rejected.
+- Privilege escalation and credential replay scenarios are tested.
+- Security decisions are observable without logging credentials or sensitive payloads.
+
+## Security considerations
+Use secure credential storage and transport, minimize credential lifetime, prevent token leakage, and avoid trusting client-provided role or ownership fields.
+
+## Trade-offs
+This pattern strengthens isolation but introduces more authentication, authorization, policy evaluation, and operational observability requirements.
+
+## Related skills and patterns
+- Skills: `security.web_security_baseline`, `security.mobile_security_baseline`
+- Pattern: `security.defense-in-depth`
+
+## Example decision signals
+Prefer this pattern whenever an internal network, gateway, client, or service identity alone must not grant access to a sensitive resource.
+

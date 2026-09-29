@@ -63,15 +63,8 @@ More unit tests usually improve speed and diagnosis, while integration and end-t
 
 ## Tests required by Gemini
 
-- Pruebas unitarias de dominio para validar la lógica de enrutamiento y normalización de mensajes.
-- Pruebas de integración para verificar el aislamiento estricto de datos entre tenants en la base de datos.
-- Pruebas de seguridad para validar la verificación de firmas en webhooks de Meta y Telegram.
-- Pruebas end-to-end de la bandeja de chat en tiempo real con WebSockets.
-
-## Tests required by Gemini
-
-- Pruebas de aislamiento de base de datos: Verificar que el usuario A de Empresa 1 no puede leer mensajes de Empresa 2 mediante manipulación de IDs.
-- Pruebas de firma de Webhooks: Simular payloads de Meta con firmas correctas e incorrectas.
-- Pruebas de concurrencia: Dos agentes intentando asignar la misma conversación simultáneamente (Optimistic Concurrency).
-- Pruebas de integración IMAP: Verificar que correos con adjuntos pesados se procesan y normalizan correctamente.
+- Pruebas de aislamiento de base de datos: Verificar que el usuario de una empresa no puede leer datos de otra.
+- Pruebas de retención y purgado: Comprobar que los mensajes y adjuntos superadas las 72 horas son eliminados del almacenamiento activo pero persisten en los logs estructurados de auditoría.
+- Pruebas de plantillas WhatsApp (HSM): Validar el comportamiento de envío fuera de la ventana de 24 horas usando plantillas genéricas.
+- Pruebas de concurrencia y conflictos en la asignación de conversaciones.
 
