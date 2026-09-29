@@ -1,0 +1,32 @@
+[project]
+name = "uwuchat-backend"
+version = "0.1.0"
+description = "Backend for uwuChat multi-tenant customer service platform"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "httpx>=0.27.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "S", "B", "A", "COM", "C4", "DTZ", "T20", "RET", "SIM", "ARG", "PTH", "ERA"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
