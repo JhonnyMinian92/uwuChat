@@ -1,0 +1,12 @@
+{
+  "project_uuid": "7b956550-032d-46a3-b579-66234ea272af",
+  "global_memory": "global-memory",
+  "inheritance": [
+    "global",
+    "project",
+    "team",
+    "task"
+  ],
+  "loaded_context": [],
+  "updated_at": "2026-09-29T16:10:02.487579+00:00"
+}
