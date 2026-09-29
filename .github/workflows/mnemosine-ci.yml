@@ -1,0 +1,62 @@
+# Añadido desde Mnemosine: pruebas automáticas en cada pull request del agente y en la
+# rama del proyecto. Puedes editarlo; Mnemosine no lo modifica.
+name: Mnemosine CI
+
+on:
+  pull_request:
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar y probar
+        shell: bash
+        run: |
+          set -eu
+          roots=$(find . -path ./docs -prune -o -path '*/node_modules' -prune -o -path '*/.venv' -prune -o \( -name pyproject.toml -o -name requirements.txt \) -print | xargs -r -n1 dirname | sort -u)
+          if [ -z "$roots" ]; then echo "Sin proyecto Python todavía"; exit 0; fi
+          for dir in $roots; do
+            echo "== $dir"
+            python -m venv "/tmp/venv$$" && . "/tmp/venv$$/bin/activate"
+            pip install --quiet --upgrade pip
+            if [ -f "$dir/requirements.txt" ]; then pip install --quiet -r "$dir/requirements.txt"; fi
+            if [ -f "$dir/requirements-dev.txt" ]; then pip install --quiet -r "$dir/requirements-dev.txt"; fi
+            if [ -f "$dir/pyproject.toml" ]; then (cd "$dir" && (pip install --quiet -e ".[dev]" || pip install --quiet -e .)); fi
+            pip install --quiet pytest
+            status=0; (cd "$dir" && python -m pytest -q) || status=$?
+            deactivate; rm -rf "/tmp/venv$$"
+            if [ "$status" -ne 0 ] && [ "$status" -ne 5 ]; then exit "$status"; fi
+          done
+
+  node:
+    name: Node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Instalar, compilar y probar
+        shell: bash
+        env:
+          CI: "true"
+        run: |
+          set -eu
+          roots=$(find . -path ./docs -prune -o -path '*/node_modules' -prune -o -name package.json -print | xargs -r -n1 dirname | sort -u)
+          if [ -z "$roots" ]; then echo "Sin proyecto Node todavía"; exit 0; fi
+          for dir in $roots; do
+            echo "== $dir"
+            (cd "$dir" && if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi)
+            (cd "$dir" && npm run build --if-present)
+            (cd "$dir" && npm test --if-present)
+          done
