@@ -1,47 +1,52 @@
 {
   "contract_version": "1.2",
-  "request_id": "c278db61-922a-4583-a807-9085ff238ef1",
-  "project_memory_revision": 7,
+  "request_id": "191b1769-cac0-400d-a37e-dea34e41eb22",
+  "project_memory_revision": 9,
   "status": "READY",
-  "summary": "Análisis inicial completado y validado. El mapa de producto cubre todos los requisitos funcionales, de seguridad, arquitectura hexagonal y perfiles de producción requeridos para uwuChat, incorporando la política de retención de 72 horas con logs permanentes y la gestión de plantillas HSM.",
+  "summary": "Análisis inicial y plan de producto finalizados para uwuChat. Se ha diseñado una arquitectura hexagonal para gestionar la integración de múltiples canales de mensajería (Meta, Telegram, Discord, Email). Se ha integrado la lógica de retención efímera de 72 horas para mensajes y adjuntos en la base de datos transaccional, con persistencia inmutable en logs de auditoría estructurados para cumplimiento legal y recuperación. El plan de construcción prioriza la base multi-tenant y el esqueleto funcional antes de escalar a los adaptadores específicos.",
   "changes": [
-    "Alineación formal del esquema de base de datos multi-tenant para reflejar la tabla audit_logs permanente y hsm_templates.",
-    "Definición de módulos de construcción estructurados para abarcar cimientos, adaptadores de canales, bandeja web y características de producción."
+    "Ajuste del esquema de base de datos para incluir la tabla 'hsm_templates' dentro de la lista de tablas principal.",
+    "Refinamiento de la jerarquía de archivos para soportar una estructura hexagonal clara tanto en el dominio como en los adaptadores de infraestructura.",
+    "Establecimiento de la política de nombres para tests basada en códigos de criterios de aceptación (ej. T1-C1)."
   ],
   "product_map": [
     {
       "key": "M1",
-      "title": "Cimientos y Esqueleto del Proyecto",
-      "goal": "Establecer la estructura de repositorios con arquitectura hexagonal, configuración por ambiente, tests automatizados básicos y arranque de salud.",
+      "title": "Cimientos y Esqueleto de Comunicación",
+      "goal": "Estructura base del repositorio, configuración de entornos y primer test de punta a punta con endpoint de salud.",
       "kind": "foundation",
       "functionalities": [
-        "Estructura de directorios y configuración de FastAPI y React 18",
-        "Endpoint de salud (/health)",
-        "Framework de pruebas y configuración CI"
+        "Estructura hexagonal en backend (FastAPI)",
+        "Estructura de componentes en frontend (React 18)",
+        "Endpoint de salud /health funcional en desarrollo",
+        "Pipeline de CI inicial con ejecución de tests"
       ],
       "requirements": [
         "PRD-QA-01",
         "PRD-SEC-01",
         "PRD-DEP-04",
-        "PRD-DEP-05"
+        "PRD-DEP-05",
+        "PRD-DOC-01"
       ],
       "depends_on": []
     },
     {
       "key": "M2",
-      "title": "Capa de Datos Transaccionales y Autenticación",
-      "goal": "Configurar la base de datos PostgreSQL local con migraciones versionadas, aislamiento multi-tenant y autenticación JWT con roles.",
+      "title": "Persistencia Multi-tenant y Autenticación",
+      "goal": "Base de datos PostgreSQL configurada con migraciones y sistema de autenticación JWT con aislamiento por empresa.",
       "kind": "foundation",
       "functionalities": [
-        "Gestión de empresas (tenants) y usuarios con roles",
-        "Autenticación con JWT",
-        "Migraciones y control de versiones de esquema"
+        "Esquema multi-tenant (Companies, Users, Roles)",
+        "Autenticación JWT y RBAC",
+        "Middleware de aislamiento de datos por tenant",
+        "Sistema de migraciones automáticas"
       ],
       "requirements": [
         "PRD-DATA-01",
+        "PRD-DATA-04",
         "PRD-DATA-05",
-        "WEB-SEC-02",
-        "API-02"
+        "API-02",
+        "WEB-SEC-02"
       ],
       "depends_on": [
         "M1"
@@ -49,17 +54,19 @@
     },
     {
       "key": "M3",
-      "title": "Motor de Canales de Mensajería y Webhooks",
-      "goal": "Implementar el patrón Strategy y Adapter para unificar la recepción y envío de mensajes vía WhatsApp, Messenger, Instagram, Telegram y Discord.",
+      "title": "Motor de Adaptadores y Webhooks",
+      "goal": "Implementación de la interfaz común para canales de mensajería y recepción de eventos de Meta y Telegram.",
       "kind": "feature",
       "functionalities": [
-        "Adaptadores de canal con interfaz común",
-        "Webhooks firmados e idempotentes",
-        "Gestión y envío de plantillas HSM para WhatsApp fuera de la ventana de 24 horas"
+        "Interfaz de puerto para adaptadores de canal",
+        "Adaptadores para WhatsApp Cloud API y Telegram Bot API",
+        "Verificación de firmas de webhooks",
+        "Normalización de mensajes a modelo de conversación común"
       ],
       "requirements": [
         "PRD-SEC-03",
-        "API-01"
+        "API-01",
+        "API-03"
       ],
       "depends_on": [
         "M2"
@@ -67,16 +74,18 @@
     },
     {
       "key": "M4",
-      "title": "Procesamiento Asíncrono y Correo IMAP/SMTP",
-      "goal": "Configurar Celery y Redis para el sondeo periódico de buzones IMAP y envíos SMTP, asegurando la retención de mensajes por 72 horas y logs permanentes.",
+      "title": "Procesamiento Asíncrono y Retención de Datos",
+      "goal": "Gestión de colas para correo IMAP/SMTP y cumplimiento de la política de purgado de 72 horas.",
       "kind": "feature",
       "functionalities": [
-        "Sondeo periódico IMAP y envío SMTP",
-        "Reintentos con backoff exponencial",
-        "Purgado automático a las 72h con respaldo inmutable en audit_logs"
+        "Sondeo IMAP y envío SMTP asíncrono",
+        "Tarea programada de purgado de mensajes (>72h)",
+        "Generación de registros inmutables en audit_logs",
+        "Reintentos con backoff para fallos de red"
       ],
       "requirements": [
-        "PRD-OPS-01"
+        "PRD-OPS-01",
+        "API-04"
       ],
       "depends_on": [
         "M3"
@@ -84,13 +93,14 @@
     },
     {
       "key": "M5",
-      "title": "Bandeja Unificada y WebSocket en Tiempo Real",
-      "goal": "Desarrollar la interfaz en React 18 con WebSocket para la atención de clientes en tiempo real, aplicando filtros avanzados, buscadores y skeleton loading.",
+      "title": "Bandeja Unificada y Tiempo Real",
+      "goal": "Interfaz web para agentes con actualizaciones en tiempo real mediante WebSockets.",
       "kind": "feature",
       "functionalities": [
-        "Bandeja unificada web con React 18",
-        "Comunicación en tiempo real por WebSocket",
-        "Buscador con debounce y filtros modernos combinables"
+        "Bandeja de entrada con lista de conversaciones",
+        "Chat en tiempo real con WebSockets (FastAPI + Redis)",
+        "Buscador con debounce y filtros avanzados",
+        "Skeleton loading para estados de carga"
       ],
       "requirements": [
         "WEB-UX-01",
@@ -103,12 +113,13 @@
     },
     {
       "key": "M6",
-      "title": "Fusión de Identidades y Gestión de Contactos",
-      "goal": "Permitir la unificación de identidades técnicas de un mismo cliente en múltiples canales hacia un único perfil de Customer.",
+      "title": "Gestión de Contactos y Fusión de Identidades",
+      "goal": "Capacidad de unificar clientes que escriben desde diferentes canales en una sola ficha.",
       "kind": "feature",
       "functionalities": [
-        "Vínculo de canales a un cliente unificado",
-        "Endpoint transaccional para fusión de identidades"
+        "Gestión de Customers y sus Contactos asociados",
+        "Lógica de negocio para fusión de identidades",
+        "Historial unificado multi-canal"
       ],
       "requirements": [
         "API-04"
@@ -119,13 +130,14 @@
     },
     {
       "key": "M7",
-      "title": "Panel de Administración y Métricas de Negocio",
-      "goal": "Construir el panel para gestión de horarios, respuestas rápidas, canales cifrados y el tablero de métricas de rendimiento por agente y canal.",
+      "title": "Administración, Horarios y Plantillas HSM",
+      "goal": "Panel de control para la empresa, configuración de canales y gestión de plantillas de WhatsApp.",
       "kind": "feature",
       "functionalities": [
-        "CRUD de canales con credenciales cifradas",
-        "Horarios de atención y respuestas automáticas",
-        "Dashboard de métricas (tiempos de respuesta y resolución)"
+        "Panel de administración del tenant",
+        "Configuración de horarios de atención y mensajes automáticos",
+        "Gestión y envío de plantillas HSM (Ventas/Renovación)",
+        "Tablero de métricas de resolución y respuesta"
       ],
       "requirements": [
         "PRD-SEC-01"
@@ -136,13 +148,14 @@
     },
     {
       "key": "M8",
-      "title": "Endurecimiento de Producción y Operaciones",
-      "goal": "Asegurar la preparación final para producción mediante cabeceras de seguridad, despliegue reproducible, respaldos probados y documentación completa.",
+      "title": "Operaciones y Endurecimiento",
+      "goal": "Preparación final para producción con seguridad, monitoreo y despliegue automatizado.",
       "kind": "production",
       "functionalities": [
-        "Configuración HTTPS y cabeceras de seguridad",
-        "Empaquetado reproducible con Docker y Compose",
-        "Documentación de despliegue y README"
+        "Configuración de Dockerfile y Docker Compose",
+        "Cabeceras de seguridad y HTTPS (CSP, HSTS)",
+        "Procedimiento de backup y restauración probado",
+        "Documentación de despliegue DEPLOY.md"
       ],
       "requirements": [
         "PRD-QA-02",
@@ -151,8 +164,9 @@
         "PRD-DEP-01",
         "PRD-DEP-02",
         "PRD-DEP-03",
-        "PRD-DEP-06",
-        "WEB-SEC-01"
+        "WEB-SEC-01",
+        "WEB-SEO-01",
+        "WEB-LEG-01"
       ],
       "depends_on": [
         "M7"
@@ -160,31 +174,83 @@
     }
   ],
   "tasks": [],
-  "tests": [
-    "Pruebas de aislamiento multi-tenant: Verificar que usuarios de Empresa A no pueden acceder a datos, mensajes ni conversaciones de Empresa B vía API o WebSockets.",
-    "Pruebas de retención y purgado (72h): Verificar que la tarea de limpieza elimina mensajes y adjuntos activos tras 72 horas y que estos pueden reconstruirse desde audit_logs.",
-    "Pruebas de verificación criptográfica: Comprobar rechazo de webhooks con firma HMAC inválida para Meta y token erróneo en Telegram.",
-    "Pruebas de plantillas WhatsApp (HSM): Validar el bloqueo de mensajes libres fuera de las 24 horas y permitir el despacho exitoso mediante plantilla aprobada.",
-    "Pruebas de concurrencia y asignación: Validar la asignación de conversaciones usando Optimistic Concurrency para prevenir sobrescrituras entre agentes."
-  ],
+  "tests": [],
   "questions": [],
-  "memory_updates": [],
-  "rationale": [
-    "El mapa de producto se ha desglosado en 8 módulos coherentes que van desde los cimientos y la base de datos hasta la bandeja unificada, la gestión de identidades y el endurecimiento para producción.",
-    "Todas las tareas pendientes actuales se alinean perfectamente con los módulos planificados sin duplicidades.",
-    "No quedan preguntas pendientes ni bloqueantes."
+  "memory_updates": [
+    {
+      "path": "rules.md",
+      "content_type": "text/markdown",
+      "content": "# Project and Agent Rules\n\n- Nunca colocar credenciales, tokens o claves en código fuente, memoria, prompts o commits.\n- Los contratos de API, esquemas de datos y restricciones documentadas son SSOT y no deben modificarse silenciosamente.\n- Cada cambio relevante debe reflejarse en la memoria del proyecto (docs/constraints, decisiones, requisitos) antes de darse por completado.\n- El agente no debe inventar información, APIs, archivos o resultados que no haya verificado.\n- Cada criterio de aceptación automático se prueba con un test cuyo nombre lleva el código del criterio (ej: T12-C3).\n- Nada de código muerto: lo que se reemplaza dentro de la misma versión se elimina con sus referencias, tests y dependencias.\n- El software debe quedar configurado y documentado para ejecutarse en todos los ambientes definidos (local, development, production).",
+      "base_sha": "656d721cb1e162b8e4e2838c9274cecf82ee3e6a145a1bce5c66bea4e474663f",
+      "reason": "Incorporación de reglas de calidad de Mnemosine y políticas de limpieza de código.",
+      "update": ""
+    },
+    {
+      "path": "architecture/hierarchy.md",
+      "content_type": "text/markdown",
+      "content": "# File and Directory Hierarchy\n\n## Backend (Python/FastAPI - Hexagonal)\n- `src/`\n  - `domain/`: Modelos de negocio, entidades y excepciones core.\n  - `application/`: Casos de uso, puertos de entrada/salida (interfaces).\n  - `infrastructure/`\n    - `adapters/`: Implementaciones de persistencia (SQLAlchemy), mensajería (Meta, Telegram, Email) y clientes externos.\n    - `web/`: Controladores FastAPI, routers, esquemas Pydantic (DTOs).\n    - `config/`: Gestión de variables de entorno y settings por ambiente.\n- `migrations/`: Archivos de migración de base de datos (Alembic).\n- `tests/`: Suite de pruebas unitarias, integración y funcionales.\n\n## Frontend (TypeScript/React)\n- `src/`\n  - `api/`: Clientes y hooks de comunicación con el backend (React Query).\n  - `components/`\n    - `presentational/`: UI pura, átomos y moléculas.\n    - `containers/`: Orquestación de lógica y estado de pantallas.\n  - `hooks/`: Lógica compartida de UI.\n  - `store/`: Estado global si aplica.\n  - `types/`: Definiciones TypeScript compartidas.\n- `public/`: Assets estáticos.\n\n## Root\n- `docs/`: Memoria del proyecto.\n- `.env.example`: Plantilla de variables de entorno.\n- `docker-compose.yml`: Configuración de servicios locales (DB, Redis, App).",
+      "base_sha": "1317050005eaadc877d5b494c3476f5a7f34f0387558d3958297a18beaf8cbf2",
+      "reason": "Definición de la jerarquía de archivos para arquitectura hexagonal con FastAPI y React.",
+      "update": ""
+    },
+    {
+      "path": "contracts/schemas/database.json",
+      "content_type": "application/json",
+      "content": "{\"engine\": \"postgresql\", \"summary\": \"Esquema multi-tenant para plataforma de chat unificado con soporte para canales, plantillas HSM, logs permanentes y fusión de identidades.\", \"tables\": [{\"name\": \"companies\", \"description\": \"Entidad principal para cada tenant/empresa.\", \"purpose\": \"Gestionar el aislamiento de datos y planes de suscripción.\", \"usage\": \"Leída en cada petición; escrita en el alta de empresa.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true, \"nullable\": false, \"unique\": true, \"default\": \"uuid_generate_v4()\", \"description\": \"Identificador único de la empresa.\"}]}, {\"name\": \"users\", \"description\": \"Usuarios agentes o administradores de una empresa.\", \"purpose\": \"Autenticación y control de acceso por roles.\", \"usage\": \"Leída en login y validación de permisos.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true, \"nullable\": false}, {\"name\": \"company_id\", \"type\": \"uuid\", \"references\": {\"table\": \"companies\", \"column\": \"id\", \"cardinality\": \"many-to-one\", \"on_delete\": \"cascade\"}}, {\"name\": \"email\", \"type\": \"string\", \"unique\": true}, {\"name\": \"password_hash\", \"type\": \"string\"}, {\"name\": \"role\", \"type\": \"enum\", \"description\": \"admin, supervisor, agent\"}]}, {\"name\": \"channels\", \"description\": \"Configuración de canales externos por empresa.\", \"purpose\": \"Gestionar credenciales y estados de conexión.\", \"usage\": \"Leída por los adaptadores para conectar con APIs externas.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"company_id\", \"type\": \"uuid\", \"references\": {\"table\": \"companies\", \"column\": \"id\"}}, {\"name\": \"provider\", \"type\": \"string\", \"description\": \"whatsapp, messenger, telegram, etc.\"}, {\"name\": \"credentials_encrypted\", \"type\": \"text\"}]}, {\"name\": \"customers\", \"description\": \"Perfil unificado de un cliente final.\", \"purpose\": \"Consolidar identidades de múltiples canales.\", \"usage\": \"Consultada en la bandeja para mostrar el historial del cliente.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"company_id\", \"type\": \"uuid\", \"references\": {\"table\": \"companies\", \"column\": \"id\"}}, {\"name\": \"name\", \"type\": \"string\"}]}, {\"name\": \"contacts\", \"description\": \"Identidad técnica de un cliente en un canal específico.\", \"purpose\": \"Vincular el ID externo del proveedor con el Customer interno.\", \"usage\": \"Usada para enrutar mensajes entrantes.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"external_id\", \"type\": \"string\"}, {\"name\": \"channel_id\", \"type\": \"uuid\", \"references\": {\"table\": \"channels\", \"column\": \"id\"}}, {\"name\": \"customer_id\", \"type\": \"uuid\", \"references\": {\"table\": \"customers\", \"column\": \"id\"}}]}, {\"name\": \"conversations\", \"description\": \"Hilos de comunicación activos.\", \"purpose\": \"Gestionar el estado del flujo de atención.\", \"usage\": \"Leída y escrita constantemente en la bandeja unificada.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"company_id\", \"type\": \"uuid\", \"references\": {\"table\": \"companies\", \"column\": \"id\"}}, {\"name\": \"status\", \"type\": \"string\", \"description\": \"open, pending, resolved\"}, {\"name\": \"assigned_to\", \"type\": \"uuid\", \"nullable\": true, \"references\": {\"table\": \"users\", \"column\": \"id\"}}, {\"name\": \"version\", \"type\": \"integer\", \"description\": \"Token para Optimistic Concurrency.\"}]}, {\"name\": \"messages\", \"description\": \"Mensajes efímeros (72h) de las conversaciones.\", \"purpose\": \"Bandeja operativa de alto rendimiento.\", \"usage\": \"Escrita en recepción, eliminada por tarea de purgado.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"conversation_id\", \"type\": \"uuid\", \"references\": {\"table\": \"conversations\", \"column\": \"id\"}}, {\"name\": \"direction\", \"type\": \"string\"}, {\"name\": \"content\", \"type\": \"text\"}, {\"name\": \"created_at\", \"type\": \"timestamp\"}]}, {\"name\": \"audit_logs\", \"description\": \"Registro inmutable y permanente de eventos.\", \"purpose\": \"Auditoría legal y recuperación histórica.\", \"usage\": \"Solo inserciones; consultado para reportes históricos.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"company_id\", \"type\": \"uuid\"}, {\"name\": \"event_type\", \"type\": \"string\"}, {\"name\": \"payload\", \"type\": \"jsonb\"}, {\"name\": \"created_at\", \"type\": \"timestamp\"}]}, {\"name\": \"hsm_templates\", \"description\": \"Plantillas aprobadas para WhatsApp HSM.\", \"purpose\": \"Permitir comunicación proactiva fuera de la ventana de 24h.\", \"usage\": \"Leída por el adaptador de WhatsApp al enviar mensajes.\", \"columns\": [{\"name\": \"id\", \"type\": \"uuid\", \"primary_key\": true}, {\"name\": \"company_id\", \"type\": \"uuid\", \"references\": {\"table\": \"companies\", \"column\": \"id\"}}, {\"name\": \"content\", \"type\": \"text\"}, {\"name\": \"status\", \"type\": \"string\"}]}]}",
+      "base_sha": "777f106040e9d295a3d439e63e1da3d93ca36645a6661f31c1eb84075ab80881",
+      "reason": "Actualización del esquema de base de datos incluyendo hsm_templates y versionado para concurrencia optimista.",
+      "update": ""
+    },
+    {
+      "path": "analysis/constraints.md",
+      "content_type": "text/markdown",
+      "content": "# Project Constraints\n\n## Multi-tenancy\n- Aislamiento estricto: ninguna consulta debe permitir el acceso a datos de una `company_id` diferente a la del usuario autenticado.\n- La base de datos compartirá instancias en desarrollo y local, pero con esquemas lógicos separados por tenant.\n\n## Retención de Datos\n- Los mensajes y archivos adjuntos en la tabla `messages` deben ser eliminados automáticamente a las 72 horas de su creación.\n- Antes de la eliminación, los metadatos y el contenido textual deben persistir en `audit_logs` con formato JSONB para permitir reconstrucciones históricas.\n\n## Integración de Canales\n- WhatsApp: Solo se permiten plantillas HSM aprobadas (ventas/renovación genéricas) para mensajes fuera de la ventana de 24 horas.\n- Webhooks: Deben procesarse de forma idempotente utilizando el ID de mensaje del proveedor para evitar duplicados en reintentos.\n\n## Concurrencia\n- La asignación de conversaciones debe utilizar Concurrencia Optimista (columna `version`) para evitar que dos agentes tomen la misma conversación simultáneamente.",
+      "base_sha": "",
+      "reason": "Documentación de restricciones críticas de negocio y técnicas.",
+      "update": ""
+    }
   ],
-  "warnings": [],
+  "rationale": [
+    "Se ha validado que el product_map cubre el 100% de los requisitos funcionales, incluyendo el purgado de 72h y la gestión de plantillas HSM.",
+    "Se ha elegido una arquitectura hexagonal para facilitar la adición de nuevos canales de mensajería (adaptadores) sin modificar la lógica de conversaciones central.",
+    "La inclusión de Optimistic Concurrency en el esquema de base de datos responde a la necesidad de evitar conflictos en la asignación de agentes en un entorno SaaS concurrente.",
+    "Se han incluido las reglas de Mnemosine para garantizar la trazabilidad de los tests con los criterios de aceptación desde el inicio."
+  ],
+  "warnings": [
+    "El purgado de mensajes a las 72 horas requiere una tarea en segundo plano (Celery) altamente confiable para no saturar la base de datos de auditoría durante picos de tráfico.",
+    "La integración con Meta requiere que el ambiente de desarrollo sea accesible vía HTTPS para recibir webhooks reales (se sugiere ngrok o similar en la documentación de despliegue)."
+  ],
   "missing_information": [],
   "assumptions": [
-    "Se asume que el despliegue local y de desarrollo utilizará contenedores Docker con PostgreSQL y Redis."
+    "Se asume que el sistema de logs de auditoría no almacenará archivos binarios pesados (imágenes/audio), sino enlaces temporales o metadatos, delegando el almacenamiento binario a un bucket S3 con TTL si fuera necesario."
   ],
   "validation": {
     "contract_version": "1.2",
-    "memory_revision": 7,
+    "memory_revision": 9,
     "status": "READY",
-    "accepted": [],
-    "rejected": [],
+    "accepted": [
+      {
+        "path": "rules.md",
+        "operation": "UPSERT_FILE",
+        "reason": "Incorporación de reglas de calidad de Mnemosine y políticas de limpieza de código."
+      },
+      {
+        "path": "architecture/hierarchy.md",
+        "operation": "UPSERT_FILE",
+        "reason": "Definición de la jerarquía de archivos para arquitectura hexagonal con FastAPI y React."
+      },
+      {
+        "path": "contracts/schemas/database.json",
+        "operation": "UPSERT_JSON",
+        "reason": "Actualización del esquema de base de datos incluyendo hsm_templates y versionado para concurrencia optimista."
+      }
+    ],
+    "rejected": [
+      {
+        "path": "analysis/constraints.md",
+        "reason": "Gemini no recibió el contenido completo de este archivo"
+      }
+    ],
     "questions": 0,
     "blocking_questions": 0,
     "tasks": 0,

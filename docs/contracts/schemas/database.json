@@ -14,17 +14,17 @@
           "primary_key": true,
           "nullable": false,
           "unique": true,
-          "default": "",
-          "description": "Identificador único.",
+          "default": "uuid_generate_v4()",
+          "description": "Identificador único de la empresa.",
           "references": null
         }
       ]
     },
     {
       "name": "users",
-      "description": "Usuarios que acceden a la plataforma.",
-      "purpose": "Autenticación y autorización.",
-      "usage": "Leída en login y validación.",
+      "description": "Usuarios agentes o administradores de una empresa.",
+      "purpose": "Autenticación y control de acceso por roles.",
+      "usage": "Leída en login y validación de permisos.",
       "columns": [
         {
           "name": "id",
@@ -62,22 +62,32 @@
           "references": null
         },
         {
-          "name": "role",
-          "type": "enum",
+          "name": "password_hash",
+          "type": "string",
           "primary_key": false,
           "nullable": true,
           "unique": false,
           "default": "",
           "description": "",
           "references": null
+        },
+        {
+          "name": "role",
+          "type": "enum",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "admin, supervisor, agent",
+          "references": null
         }
       ]
     },
     {
       "name": "channels",
-      "description": "Configuración de conexiones externas.",
-      "purpose": "Almacenar credenciales cifradas.",
-      "usage": "Leída por adaptadores.",
+      "description": "Configuración de canales externos por empresa.",
+      "purpose": "Gestionar credenciales y estados de conexión.",
+      "usage": "Leída por los adaptadores para conectar con APIs externas.",
       "columns": [
         {
           "name": "id",
@@ -111,7 +121,7 @@
           "nullable": true,
           "unique": false,
           "default": "",
-          "description": "",
+          "description": "whatsapp, messenger, telegram, etc.",
           "references": null
         },
         {
@@ -128,9 +138,9 @@
     },
     {
       "name": "customers",
-      "description": "Identidad unificada de una persona física.",
-      "purpose": "Vincular canales.",
-      "usage": "",
+      "description": "Perfil unificado de un cliente final.",
+      "purpose": "Consolidar identidades de múltiples canales.",
+      "usage": "Consultada en la bandeja para mostrar el historial del cliente.",
       "columns": [
         {
           "name": "id",
@@ -171,9 +181,9 @@
     },
     {
       "name": "contacts",
-      "description": "Identidad técnica en un canal específico.",
-      "purpose": "Vincular ID externo con Customer.",
-      "usage": "",
+      "description": "Identidad técnica de un cliente en un canal específico.",
+      "purpose": "Vincular el ID externo del proveedor con el Customer interno.",
+      "usage": "Usada para enrutar mensajes entrantes.",
       "columns": [
         {
           "name": "id",
@@ -229,9 +239,9 @@
     },
     {
       "name": "conversations",
-      "description": "Hilos de chat.",
-      "purpose": "Gestionar estado y asignación.",
-      "usage": "",
+      "description": "Hilos de comunicación activos.",
+      "purpose": "Gestionar el estado del flujo de atención.",
+      "usage": "Leída y escrita constantemente en la bandeja unificada.",
       "columns": [
         {
           "name": "id",
@@ -259,28 +269,13 @@
           }
         },
         {
-          "name": "customer_id",
-          "type": "uuid",
-          "primary_key": false,
-          "nullable": true,
-          "unique": false,
-          "default": "",
-          "description": "",
-          "references": {
-            "table": "customers",
-            "column": "id",
-            "cardinality": "many-to-one",
-            "on_delete": ""
-          }
-        },
-        {
           "name": "status",
           "type": "string",
           "primary_key": false,
           "nullable": true,
           "unique": false,
           "default": "",
-          "description": "",
+          "description": "open, pending, resolved",
           "references": null
         },
         {
@@ -297,14 +292,24 @@
             "cardinality": "many-to-one",
             "on_delete": ""
           }
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "Token para Optimistic Concurrency.",
+          "references": null
         }
       ]
     },
     {
       "name": "messages",
-      "description": "Entrada de texto o archivo efímero (72h).",
-      "purpose": "Histórico activo.",
-      "usage": "Escrito en recepción, purgado a las 72h.",
+      "description": "Mensajes efímeros (72h) de las conversaciones.",
+      "purpose": "Bandeja operativa de alto rendimiento.",
+      "usage": "Escrita en recepción, eliminada por tarea de purgado.",
       "columns": [
         {
           "name": "id",
@@ -352,21 +357,11 @@
           "references": null
         },
         {
-          "name": "msg_type",
-          "type": "string",
+          "name": "created_at",
+          "type": "timestamp",
           "primary_key": false,
           "nullable": true,
           "unique": false,
-          "default": "",
-          "description": "",
-          "references": null
-        },
-        {
-          "name": "provider_msg_id",
-          "type": "string",
-          "primary_key": false,
-          "nullable": true,
-          "unique": true,
           "default": "",
           "description": "",
           "references": null
@@ -375,9 +370,9 @@
     },
     {
       "name": "audit_logs",
-      "description": "Registro permanente e inmutable de comunicaciones y eventos.",
-      "purpose": "Auditoría y recuperación por rangos de fecha y usuario.",
-      "usage": "Escrito permanentemente.",
+      "description": "Registro inmutable y permanente de eventos.",
+      "purpose": "Auditoría legal y recuperación histórica.",
+      "usage": "Solo inserciones; consultado para reportes históricos.",
       "columns": [
         {
           "name": "id",
@@ -400,8 +395,8 @@
           "references": null
         },
         {
-          "name": "user_id",
-          "type": "uuid",
+          "name": "event_type",
+          "type": "string",
           "primary_key": false,
           "nullable": true,
           "unique": false,
@@ -422,6 +417,59 @@
         {
           "name": "created_at",
           "type": "timestamp",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        }
+      ]
+    },
+    {
+      "name": "hsm_templates",
+      "description": "Plantillas aprobadas para WhatsApp HSM.",
+      "purpose": "Permitir comunicación proactiva fuera de la ventana de 24h.",
+      "usage": "Leída por el adaptador de WhatsApp al enviar mensajes.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "company_id",
+          "type": "uuid",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": {
+            "table": "companies",
+            "column": "id",
+            "cardinality": "many-to-one",
+            "on_delete": ""
+          }
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "primary_key": false,
+          "nullable": true,
+          "unique": false,
+          "default": "",
+          "description": "",
+          "references": null
+        },
+        {
+          "name": "status",
+          "type": "string",
           "primary_key": false,
           "nullable": true,
           "unique": false,

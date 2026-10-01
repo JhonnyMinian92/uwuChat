@@ -29,3 +29,9 @@ Record mandatory technical, business, security, compatibility and operational co
 - Alineación formal del esquema de base de datos multi-tenant para reflejar la tabla audit_logs permanente y hsm_templates.
 - Definición de módulos de construcción estructurados para abarcar cimientos, adaptadores de canales, bandeja web y características de producción.
 
+## Gemini proposed changes
+
+- Ajuste del esquema de base de datos para incluir la tabla 'hsm_templates' dentro de la lista de tablas principal.
+- Refinamiento de la jerarquía de archivos para soportar una estructura hexagonal clara tanto en el dominio como en los adaptadores de infraestructura.
+- Establecimiento de la política de nombres para tests basada en códigos de criterios de aceptación (ej. T1-C1).
+
