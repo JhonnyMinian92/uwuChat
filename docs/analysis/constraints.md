@@ -24,3 +24,8 @@ Record mandatory technical, business, security, compatibility and operational co
 - Alineación formal del esquema de base de datos en database.json y database.md reflejando la tabla audit_logs inmutable y la tabla hsm_templates para WhatsApp fuera de la ventana de 24 horas.
 - Reflejo de la política de retención de 72 horas para mensajes y adjuntos activos con purga automática y respaldo estructurado en logs de auditoría permanentes.
 
+## Gemini proposed changes
+
+- Alineación formal del esquema de base de datos multi-tenant para reflejar la tabla audit_logs permanente y hsm_templates.
+- Definición de módulos de construcción estructurados para abarcar cimientos, adaptadores de canales, bandeja web y características de producción.
+
