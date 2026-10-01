@@ -27,300 +27,272 @@ este archivo es una foto del plan en el momento de la última publicación.
   - Criterio: Middleware de validación de roles y aislamiento por empresa operativo.
   - Criterio: Pruebas unitarias para los flujos de autenticación.
 
-## Como administrador de empresa, quiero una interfaz web amigable para administrar canales, horarios, respuestas rápidas y consultar el rendimiento de atención.
+## Panel de Administración
 
 - [ ] **Panel de administración y métricas por empresa** (pendiente)
-  - Depende de: Configuración de horarios de atención y despacho de respuestas automáticas fuera de horario, Gestión de respuestas rápidas y categorización por etiquetas, Motor de agregación de métricas de rendimiento y tablero analítico
-  - Criterio: La ruta /admin restringe el acceso según rol y redirige a la bandeja a usuarios con rol agente.
-  - Criterio: El formulario de conexión de canales permite configurar credenciales de forma segura sin mostrarlas en claro.
-  - Criterio: El tablero de métricas renderiza KPIs y gráficos de volumen con selector de rango temporal.
-  - Criterio: Verificación manual de la configuración de horarios de atención y mensajes de ausencia.
+  - Depende de: Motor de agregación de métricas de rendimiento y tablero analítico
+  - Criterio: M7.T5-C1: El panel de administración se adapta correctamente a pantallas desde 360px de ancho sin desbordes.
+  - Criterio: M7.T5-C2: Las rutas del panel de administración redirigen o bloquean a usuarios sin privilegios administrativos.
 
-## Bandeja unificada de atención
-
-- [ ] **Construcción de la bandeja unificada en React 18** (pendiente)
-  - Depende de: Configuración del proyecto frontend con React 18, TypeScript y Vite, Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant
-  - Criterio: T2-C1: Renderizar la lista de conversaciones y el panel de detalle de chat con badges específicos para cada canal soportado.
-  - Criterio: T2-C2: Permitir la selección de conversación cambiando activamente el historial del chat mostrado.
-  - Criterio: T2-C3: Adaptar la vista a pantallas de 360px permitiendo alternar entre lista y chat sin desbordamiento horizontal.
-
-## Como arquitecto, quiero una interfaz común para todos los canales para poder añadir nuevos proveedores sin tocar la lógica de negocio central.
+## Como arquitecto del chat, quiero una interfaz común de puerto para adaptadores de mensajería para desacoplar el dominio de las APIs externas.
 
 - [ ] **Desarrollo del motor de adaptadores de canales de mensajería** (pendiente)
   - Depende de: Pruebas de Integración de Aislamiento y Seguridad Multi-tenant
-  - Criterio: M3-T1-C1: Definida clase abstracta BaseChannelAdapter con firma de métodos obligatorios.
-  - Criterio: M3-T1-C2: AdapterFactory devuelve la instancia correcta según el enum de proveedores.
+  - Criterio: La interfaz BaseChannelAdapter y la clase de datos NormalizedMessage están definidas correctamente y forzadas con tipos estrictos.
+  - Criterio: La normalización de un payload de entrada produce un objeto NormalizedMessage válido según el esquema definido.
 
-## Como administrador de soporte, quiero unificar los perfiles de un cliente que me escribe por distintos canales para tener su historial centralizado.
+## Interfaz de Usuario de la Bandeja
 
-- [ ] **Lógica de fusión de identidades y gestión de contactos** (pendiente)
-  - Depende de: Configuración de persistencia asíncrona y sistema de semillas de datos, Implementación de Inyección de Contexto de Tenant y Aislamiento
-  - Criterio: La fusión de dos clientes se ejecuta en una única transacción de base de datos.
-  - Criterio: Se prohíbe la fusión de clientes que pertenecen a diferentes empresas (tenants).
-  - Criterio: Todas las conversaciones del cliente origen son transferidas íntegramente al cliente destino.
+- [ ] **Construcción de la bandeja unificada en React 18** (pendiente)
+  - Depende de: Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant
+  - Criterio: M5.T2-C1: Mostrar la lista de conversaciones estructurada por canal y estado con diseño responsive.
+  - Criterio: M5.T2-C2: Enviar un mensaje de texto operativo que se añade inmediatamente a la vista.
 
-## Infraestructura asíncrona base para mensajería y tareas periódicas
+## Procesamiento Asíncrono IMAP/SMTP
 
 - [ ] **Infraestructura asíncrona y procesamiento de correo IMAP** (pendiente)
-  - Depende de: Desarrollo del motor de adaptadores de canales de mensajería, Controlador Unificado de Webhooks e Idempotencia
-  - Criterio: La instancia de Celery inicializa y establece conexión verificable con Redis en entorno de pruebas.
-  - Criterio: El decorador de reintentos con backoff exponencial reprograma la tarea ante excepciones transitorias respetando el factor de espera.
-  - Criterio: El registro de errores de Celery almacena metadatos y código de error en formato estructurado sin filtrar credenciales ni datos sensibles.
+  - Depende de: Controlador Unificado de Webhooks e Idempotencia
+  - Criterio: M4.T1-C1: El sistema de tareas asíncronas reintenta operaciones fallidas de red utilizando backoff exponencial.
+  - Criterio: M4.T1-C2: Los errores de conexión de correo se registran adecuadamente sin exponer credenciales ni datos sensibles.
+- [ ] **Adaptador de Correo Electrónico: Ingesta periódica IMAP y Despacho SMTP** (pendiente)
+  - Depende de: Infraestructura asíncrona y procesamiento de correo IMAP
+  - Criterio: M4.T2-C1: El lector IMAP sondea periódicamente y normaliza los mensajes entrantes al modelo común.
+  - Criterio: M4.T2-C2: El servicio SMTP despacha correctamente las respuestas de los agentes al buzón original del cliente.
 
-## Cimientos de la plataforma
+## Gestión de Contactos y Fusión de Identidades
 
-- [ ] **Configuración del proyecto frontend con React 18, TypeScript y Vite** (pendiente)
-  - Criterio: Vitest ejecuta con éxito el test unitario de renderizado del componente principal en frontend/src/App.test.tsx.
-  - Criterio: La compilación estricta de tipos con tsc --noEmit finaliza con cero errores.
-  - Criterio: El empaquetado de producción genera los artefactos en frontend/dist de forma limpia.
+- [ ] **Lógica de fusión de identidades y gestión de contactos** (pendiente)
+  - Depende de: Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant
+  - Criterio: M6.T1-C1: Un cliente nuevo se crea automáticamente al registrar un contacto no existente en el canal.
+  - Criterio: M6.T1-C2: La fusión de dos customers transfiere correctamente todos los contactos y conversaciones al customer principal.
+  - Criterio: M6.T1-C3: Se rechaza e impide la fusión de customers que pertenecen a distintas empresas (tenants).
+- [ ] **Interfaz de usuario para el perfil del cliente y fusión de identidades** (pendiente)
+  - Depende de: Endpoints de la API para gestión de identidades y contactos
+  - Criterio: M6.T3-C1: La pantalla de perfil muestra claramente todos los canales y contactos asociados al cliente.
+  - Criterio: M6.T3-C2: El modal de fusión permite buscar el cliente secundario y muestra una confirmación antes de ejecutar la acción.
+  - Criterio: M6.T3-C3: Las interfaces cumplen con los criterios de accesibilidad básica WCAG 2.1 AA.
+- [ ] **Endpoints de la API para gestión de identidades y contactos** (pendiente)
+  - Depende de: Lógica de fusión de identidades y gestión de contactos
+  - Criterio: M6.T2-C1: El listado de customers devuelve resultados paginados correctamente.
+  - Criterio: M6.T2-C2: El endpoint de fusión requiere privilegios de supervisor o administrador y valida los IDs de entrada.
+  - Criterio: M6.T2-C3: Se documenta correctamente la especificación OpenAPI para los nuevos endpoints de contactos.
+- [ ] **Pruebas de integridad y aislamiento para la fusión de clientes** (pendiente)
+  - Depende de: Interfaz de usuario para el perfil del cliente y fusión de identidades
+  - Criterio: M6.T4-C1: Los usuarios de una empresa jamás pueden consultar o fusionar clientes pertenecientes a otra empresa.
+  - Criterio: M6.T4-C2: La suite de pruebas de integración de M6 se ejecuta y pasa exitosamente en el pipeline de CI.
+
+## Cimientos y Esqueleto de Comunicación
+
 - [ ] **Configuración del pipeline de Integración Continua (CI) y comprobaciones de calidad** (pendiente)
-  - Depende de: Configuración del proyecto frontend con React 18, TypeScript y Vite, Implementación del endpoint de salud /health y configuración de entornos en FastAPI
-  - Criterio: El archivo de workflow .github/workflows/ci.yml cuenta con una estructura YAML válida con etapas para backend y frontend.
-  - Criterio: El repositorio cuenta con archivos .env.example en la raíz y en backend/ y frontend/, y los archivos .env se encuentran bloqueados en .gitignore.
-  - Criterio: El conjunto de pruebas automatizadas del proyecto se ejecuta en el pipeline y finaliza en verde.
+  - Depende de: Implementación del endpoint de salud /health y configuración de entornos en FastAPI, Configuración del proyecto frontend con React 18, TypeScript y Vite
+  - Criterio: El pipeline de CI ejecuta con éxito la suite de pruebas del backend y del frontend en cada ejecución.
+  - Criterio: El repositorio incluye el archivo README.md con instrucciones claras de instalación, ejecución y pruebas.
 - [ ] **Implementación del endpoint de salud /health y configuración de entornos en FastAPI** (pendiente)
-  - Criterio: La petición GET /health retorna código HTTP 200 con cuerpo JSON {'status': 'ok', 'database': 'connected'} cuando la base de datos está disponible.
-  - Criterio: La petición GET /health retorna código HTTP 503 cuando la base de datos no está disponible, sin exponer contraseñas ni stack traces.
-  - Criterio: La configuración carga las variables desde el entorno y falla de forma temprana si faltan parámetros obligatorios.
+  - Criterio: El endpoint GET /health responde con código 200 y estado OK cuando la aplicación está operativa.
+  - Criterio: La configuración por ambiente carga correctamente desde las variables de entorno mediante settings.
+- [ ] **Configuración del proyecto frontend con React 18, TypeScript y Vite** (pendiente)
+  - Criterio: El proyecto frontend compila correctamente en TypeScript con strict mode activado.
+  - Criterio: La estructura de carpetas y componentes cumple con la jerarquía definida y los tests corren en verde.
 
-## Como responsable de calidad, quiero asegurar que el aislamiento de datos es impenetrable antes de pasar a la integración con canales externos.
-
-- [ ] **Pruebas de Integración de Aislamiento y Seguridad Multi-tenant** (pendiente)
-  - Depende de: Endpoints de Gestión de Perfil y Usuarios (CRUD Básico)
-  - Criterio: Test 'test_cross_tenant_data_leak' confirma que el Tenant A no puede ver registros del Tenant B.
-  - Criterio: La eliminación de una empresa mediante script borra todos sus usuarios asociados en cascada.
-
-## Como empresa, necesito que mis datos estén estrictamente aislados de los datos de otras empresas para cumplir con la privacidad.
-
-- [ ] **Implementación de Inyección de Contexto de Tenant y Aislamiento** (pendiente)
-  - Depende de: Configuración de persistencia asíncrona y sistema de semillas de datos
-  - Criterio: La dependencia 'get_current_tenant' devuelve el ID de empresa correcto del token JWT.
-  - Criterio: Toda consulta a la base de datos de una entidad multi-tenant incluye 'WHERE company_id = ...'.
-
-## Como desarrollador, necesito un entorno de base de datos poblado y configurado correctamente para trabajar en las funcionalidades de negocio.
-
-- [ ] **Configuración de persistencia asíncrona y sistema de semillas de datos** (pendiente)
-  - Depende de: Implementación del endpoint de salud /health y configuración de entornos en FastAPI
-  - Criterio: La aplicación se conecta a la base de datos PostgreSQL usando el driver asíncrono asyncpg.
-  - Criterio: El script de seeds crea 2 empresas y 4 usuarios (admin, supervisor, agente) sin errores.
-  - Criterio: La configuración de base de datos no contiene secretos hardcodeados, lee todo de .env.
-
-## Como administrador de seguridad, necesito que el sistema use hashes fuertes y restrinja acciones según el rol del usuario.
+## Seguridad y Autenticación
 
 - [ ] **Refuerzo de Seguridad: RBAC y Hashing de Credenciales** (pendiente)
   - Depende de: Implementación de Inyección de Contexto de Tenant y Aislamiento
-  - Criterio: Las contraseñas en la base de datos se almacenan como hashes bcrypt no reversibles.
-  - Criterio: Los endpoints marcados para ADMIN devuelven 403 Forbidden si el token pertenece a un AGENT.
+  - Criterio: M2.T3-C1: Las contraseñas se almacenan empleando un hash fuerte y nunca en texto plano.
+  - Criterio: M2.T3-C2: Un usuario con rol agent recibe un error HTTP 403 al intentar acceder a rutas protegidas exclusivamente para roles admin o supervisor.
 
-## Como administrador de empresa, quiero poder gestionar a mis agentes para que puedan empezar a atender clientes.
+## Calidad y Pruebas
+
+- [ ] **Pruebas de Integración de Aislamiento y Seguridad Multi-tenant** (pendiente)
+  - Depende de: Endpoints de Gestión de Perfil y Usuarios (CRUD Básico)
+  - Criterio: M2.T5-C1: Los usuarios de la Empresa A no pueden acceder a datos, perfiles ni recursos de la Empresa B mediante manipulación de parámetros de la API.
+  - Criterio: M2.T5-C2: La verificación de tokens JWT expirados o alterados rechaza el acceso de forma inequívoca en todos los endpoints protegidos.
+
+## Persistencia y Configuración de Base de Datos
+
+- [ ] **Configuración de persistencia asíncrona y sistema de semillas de datos** (pendiente)
+  - Depende de: Implementación del endpoint de salud /health y configuración de entornos en FastAPI
+  - Criterio: M2.T1-C1: Las migraciones de Alembic se aplican exitosamente sobre la base de datos PostgreSQL creando todas las tablas requeridas por el modelo multi-tenant.
+  - Criterio: M2.T1-C2: El script de semillas de datos inserta registros de prueba válidos sin incluir datos reales ni comprometer entornos de producción.
+
+## Aislamiento Multi-tenant
+
+- [ ] **Implementación de Inyección de Contexto de Tenant y Aislamiento** (pendiente)
+  - Depende de: Configuración de persistencia asíncrona y sistema de semillas de datos
+  - Criterio: M2.T2-C1: Las consultas a nivel de repositorio aplican automáticamente el filtro por company_id según el contexto de la sesión.
+  - Criterio: M2.T2-C2: Las peticiones sin contexto de tenant válido son rechazadas inmediatamente con código HTTP 401 o 403.
+
+## Gestión de Usuarios
 
 - [ ] **Endpoints de Gestión de Perfil y Usuarios (CRUD Básico)** (pendiente)
   - Depende de: Refuerzo de Seguridad: RBAC y Hashing de Credenciales
-  - Criterio: El listado de usuarios devuelve una respuesta paginada con metadatos (total, página, tamaño).
-  - Criterio: Es imposible crear un usuario asignándolo a una empresa distinta a la del administrador autenticado.
+  - Criterio: M2.T4-C1: El endpoint de creación de usuario valida correctamente los campos de entrada y rechaza correos malformados o faltantes.
+  - Criterio: M2.T4-C2: Los listados de usuarios devuelven únicamente los registros asociados a la empresa del usuario autenticado y de forma paginada.
 
-## Como administrador, quiero cumplir con las políticas de WhatsApp para evitar el baneo del número de la empresa.
-
-- [ ] **Gestión de Salida y Restricción de Ventana 24h (WhatsApp HSM)** (pendiente)
-  - Depende de: Controlador Unificado de Webhooks e Idempotencia
-  - Criterio: M3-T5-C1: Bloqueo de envío de texto libre en WhatsApp si han pasado > 24h desde el último mensaje del cliente.
-  - Criterio: M3-T5-C2: Envío exitoso mediante plantilla aprobada (HSM) fuera de la ventana de 24 horas.
-
-## Como empresa, quiero recibir mensajes de mis clientes de WhatsApp, Facebook e Instagram en un solo lugar.
-
-- [ ] **Adaptadores de Redes Meta: WhatsApp, Messenger e Instagram** (pendiente)
-  - Depende de: Desarrollo del motor de adaptadores de canales de mensajería
-  - Criterio: M3-T2-C1: Rechazo de webhooks con firma HMAC inválida para WhatsApp.
-  - Criterio: M3-T2-C2: Conversión correcta de adjuntos (imágenes/audio) desde el JSON de Meta al modelo interno de mensajes.
-
-## Como empresa tecnológica, quiero atender a mis comunidades de Telegram y Discord desde la misma plataforma.
+## Como cliente de la empresa, quiero comunicarme vía Telegram o Discord y que mis mensajes lleguen a la bandeja unificada sin alteraciones.
 
 - [ ] **Adaptadores para Telegram Bot y Discord Bot** (pendiente)
   - Depende de: Desarrollo del motor de adaptadores de canales de mensajería
-  - Criterio: M3-T3-C1: Verificación de token de Telegram en la cabecera X-Telegram-Bot-Api-Secret-Token.
-  - Criterio: M3-T3-C2: Mensajes de Discord normalizados incluyendo el discriminador del usuario y contenido.
+  - Criterio: Los adaptadores de Telegram y Discord normalizan correctamente los formatos de mensajes entrantes de cada API.
+  - Criterio: El despacho de mensajes salientes para Telegram y Discord se realiza de manera segura y controlando respuestas del API.
 
-## Como operador del sistema, quiero garantizar que ningún mensaje se procese dos veces y que todos queden auditados.
+## Como agente de atención al cliente, quiero recibir y responder mensajes desde WhatsApp, Facebook Messenger e Instagram de forma unificada.
+
+- [ ] **Adaptadores de Redes Meta: WhatsApp, Messenger e Instagram** (pendiente)
+  - Depende de: Desarrollo del motor de adaptadores de canales de mensajería
+  - Criterio: El adaptador de Meta puede deserializar y normalizar correctamente un webhook de mensaje entrante de WhatsApp, Messenger e Instagram.
+  - Criterio: El método de envío de mensajes realiza una llamada POST HTTP autorizada hacia la Graph API de Meta.
+
+## Como administrador del sistema, quiero asegurar que las solicitudes entrantes de webhooks sean auténticas y que los reintentos de red del proveedor no dupliquen los mensajes.
 
 - [ ] **Controlador Unificado de Webhooks e Idempotencia** (pendiente)
   - Depende de: Adaptadores de Redes Meta: WhatsApp, Messenger e Instagram, Adaptadores para Telegram Bot y Discord Bot
-  - Criterio: M3-T4-C1: Mensajes duplicados con el mismo provider_msg_id son ignorados (idempotencia).
-  - Criterio: M3-T4-C2: Todo mensaje recibido genera un registro en audit_logs de forma inmutable.
+  - Criterio: Se rechazan las peticiones a webhooks que no tengan firmas o tokens de verificación válidos.
+  - Criterio: El endpoint de webhooks procesa el payload de manera idempotente usando el external_id del mensaje.
 
-## Integración de canal de correo electrónico bidireccional
+## Como administrador de canales de Meta, quiero garantizar el cumplimiento de las políticas de WhatsApp (ventana de 24h) para evitar penalizaciones en el número de teléfono.
 
-- [ ] **Adaptador de Correo Electrónico: Ingesta periódica IMAP y Despacho SMTP** (pendiente)
-  - Depende de: Infraestructura asíncrona y procesamiento de correo IMAP, Desarrollo del motor de adaptadores de canales de mensajería
-  - Criterio: La tarea de sondeo IMAP descarga correos no leídos y los normaliza correctamente en conversaciones y mensajes activos asignados a la empresa correspondiente.
-  - Criterio: El despacho de correos salientes vía SMTP envía los datos al servidor configurado y marca el mensaje con estado de entrega o error.
-  - Criterio: Los fallos transitorios de red durante el envío SMTP disparan reintentos automáticos sin generar duplicados en la base de datos.
+- [ ] **Gestión de Salida y Restricción de Ventana 24h (WhatsApp HSM)** (pendiente)
+  - Depende de: Adaptadores de Redes Meta: WhatsApp, Messenger e Instagram, Controlador Unificado de Webhooks e Idempotencia
+  - Criterio: Se bloquea el envío de un mensaje de texto libre si han transcurrido más de 24 horas desde la última interacción entrante de WhatsApp.
+  - Criterio: Se permite el envío exitoso de un mensaje de plantilla autorizada (HSM) aun superando la ventana de 24 horas.
 
-## Cumplimiento de políticas de retención de datos efímeros y auditoría inmutable
-
-- [ ] **Tarea de purgado automático a las 72 horas y archivo inmutable en audit_logs** (pendiente)
-  - Depende de: Infraestructura asíncrona y procesamiento de correo IMAP
-  - Criterio: Los mensajes con antigüedad superior a 72 horas son eliminados de la tabla messages de forma segura y en lotes transaccionales.
-  - Criterio: Los mensajes con antigüedad inferior o igual a 72 horas permanecen intactos en la tabla messages tras la ejecución del purgado.
-  - Criterio: Cada mensaje purgado cuenta con un registro correspondiente en audit_logs que contiene el payload completo y el company_id para su reconstrucción histórica.
-
-## Validación de integración y resiliencia del sistema de mensajería asíncrona
+## Validación y Calidad del Módulo M4
 
 - [ ] **Pruebas de integración de tareas asíncronas, resiliencia y purgado de datos (72h)** (pendiente)
-  - Depende de: Adaptador de Correo Electrónico: Ingesta periódica IMAP y Despacho SMTP, Tarea de purgado automático a las 72 horas y archivo inmutable en audit_logs
-  - Criterio: La suite de integración valida que los mensajes procesados y purgados después de 72h pueden reconstruirse fielmente desde audit_logs sin pérdida de información.
-  - Criterio: Las tareas Celery concurrentes de diferentes empresas procesan colas manteniendo aislamiento absoluto de datos y credenciales por tenant.
-  - Criterio: Los errores no recuperables en canales de correo quedan asentados en el registro de auditoría con código descriptivo y sin propagar excepciones no controladas.
+  - Depende de: Tarea de purgado automático a las 72 horas y archivo inmutable en audit_logs
+  - Criterio: M4.T4-C1: Las pruebas de retención y purgado (72h) comprueban que los mensajes eliminados de la tabla activa persisten en audit_logs.
+  - Criterio: M4.T4-C2: Las respuestas de error en operaciones asíncronas y de red siguen un formato estándar y comprensible.
 
-## Experiencia de usuario y rendimiento
+## Retención y Purgado de Datos
 
-- [ ] **Skeleton loaders, estados vacíos/error accesibles y optimización de rendimiento** (pendiente)
-  - Depende de: Construcción de la bandeja unificada en React 18, Buscador con debounce y filtros modernos combinables, Cliente WebSocket en React con reconexión exponencial y sincronización en tiempo real
-  - Criterio: T5-C1: Mostrar esqueletos de carga animados con la silueta de la lista y mensajes mientras se cargan los datos iniciales.
-  - Criterio: T5-C2: Proveer botón de reintento funcional en la pantalla de error ante fallos de conexión HTTP o WebSocket.
-  - Criterio: T5-C3: Verificar ausencia de violaciones de accesibilidad (axe-core) en la lista de conversaciones y controles de interacción.
-  - Criterio: T5-C4: Comprobar que las rutas no existentes despliegan la página 404 estructurada con enlace a la bandeja.
+- [ ] **Tarea de purgado automático a las 72 horas y archivo inmutable en audit_logs** (pendiente)
+  - Depende de: Adaptador de Correo Electrónico: Ingesta periódica IMAP y Despacho SMTP
+  - Criterio: M4.T3-C1: La tarea de purgado identifica y elimina mensajes y adjuntos activos superadas las 72 horas.
+  - Criterio: M4.T3-C2: Se genera un registro inmutable en audit_logs por cada mensaje purgado que permite su reconstrucción histórica.
 
-## Calidad y verificación integral
-
-- [ ] **Pruebas de integración E2E de la bandeja unificada y verificación de rendimiento** (pendiente)
-  - Depende de: Skeleton loaders, estados vacíos/error accesibles y optimización de rendimiento
-  - Criterio: T6-C1: Completar el ciclo de lectura, filtrado y envío de respuesta en tiempo real simulado de extremo a extremo sin recargar la página.
-  - Criterio: T6-C2: Desconectar y limpiar adecuadamente las suscripciones WebSocket al desmontar el componente de chat sin dejar listeners colgados.
-  - Criterio: T6-C3: Validar que el bundle de la aplicación en producción divide adecuadamente los chunks principales sin exceder presupuestos de tamaño.
-
-## Comunicación en tiempo real
-
-- [ ] **Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant** (pendiente)
-  - Depende de: Pruebas de integración de tareas asíncronas, resiliencia y purgado de datos (72h)
-  - Criterio: T1-C1: Rechazar conexiones WebSocket que no envíen token JWT válido o cuyo token haya expirado con código de cierre 4401.
-  - Criterio: T1-C2: Garantizar aislamiento estricto impidiendo que los mensajes emitidos por el tenant A lleguen a los WebSockets conectados del tenant B.
-  - Criterio: T1-C3: Difundir eventos estructurados de asignación y cambio de estado de conversación a todos los agentes activos de la misma empresa.
-
-## Buscador y filtros avanzados
-
-- [ ] **Buscador con debounce y filtros modernos combinables** (pendiente)
-  - Depende de: Construcción de la bandeja unificada en React 18
-  - Criterio: T3-C1: Retardar la ejecución del filtrado durante 300 ms mientras el usuario teclea en el buscador.
-  - Criterio: T3-C2: Reflejar las facetas activas de canal, estado y agente en los parámetros query de la URL del navegador.
-  - Criterio: T3-C3: Mostrar coincidencia resaltada o estado vacío específico si ningún chat coincide con el texto buscado.
-
-## Sincronización en tiempo real
+## Sincronización en Tiempo Real Frontend
 
 - [ ] **Cliente WebSocket en React con reconexión exponencial y sincronización en tiempo real** (pendiente)
   - Depende de: Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant, Construcción de la bandeja unificada en React 18
-  - Criterio: T4-C1: Reintentar la conexión con retraso creciente (backoff exponencial) tras una pérdida abrupta de socket.
-  - Criterio: T4-C2: Añadir mensajes entrantes recibidos por WebSocket en el hilo de la conversación activa sin requerir recargar la página.
-  - Criterio: T4-C3: Mostrar indicador visual del estado de conectividad en tiempo real (en línea / reconectando).
+  - Criterio: M5.T4-C1: Reconectar automáticamente con backoff exponencial cuando la conexión WebSocket se interrumpe.
+  - Criterio: M5.T4-C2: Actualizar el listado de conversaciones y el chat activo al recibir un mensaje entrante por el socket.
 
-## Como agente de atención, quiero poder ver rápidamente qué otros canales tiene vinculados el cliente y fusionarlo si detecto un duplicado.
+## Pruebas y Calidad de la Bandeja
 
-- [ ] **Interfaz de usuario para el perfil del cliente y fusión de identidades** (pendiente)
-  - Depende de: Construcción de la bandeja unificada en React 18, Endpoints de la API para gestión de identidades y contactos
-  - Criterio: El buscador de clientes para fusión aplica un debounce para evitar peticiones excesivas.
-  - Criterio: Se muestra un diálogo de confirmación antes de proceder con la fusión, advirtiendo que es irreversible.
-  - Criterio: La interfaz es totalmente accesible mediante teclado y cumple contrastes WCAG AA.
+- [ ] **Pruebas de integración E2E de la bandeja unificada y verificación de rendimiento** (pendiente)
+  - Depende de: Cliente WebSocket en React con reconexión exponencial y sincronización en tiempo real, Skeleton loaders, estados vacíos/error accesibles y optimización de rendimiento
+  - Criterio: M5.T6-C1: Completar el flujo E2E de login de agente, selección de conversación y respuesta en tiempo real sin errores.
+  - Criterio: M5.T6-C2: Obtener una puntuación de rendimiento de Lighthouse superior o igual a 80 en la vista móvil de la bandeja.
 
-## Como responsable de seguridad, quiero garantizar que la fusión de identidades no rompa el aislamiento de datos entre empresas.
+## Experiencia de Usuario y Accesibilidad
 
-- [ ] **Pruebas de integridad y aislamiento para la fusión de clientes** (pendiente)
-  - Depende de: Interfaz de usuario para el perfil del cliente y fusión de identidades
-  - Criterio: La tabla audit_logs contiene un registro detallado del evento de fusión con los IDs involucrados.
-  - Criterio: Un agente de la Empresa A no puede listar ni fusionar clientes de la Empresa B aunque conozca sus IDs.
+- [ ] **Skeleton loaders, estados vacíos/error accesibles y optimización de rendimiento** (pendiente)
+  - Depende de: Construcción de la bandeja unificada en React 18, Buscador con debounce y filtros modernos combinables
+  - Criterio: M5.T5-C1: Mostrar skeleton loaders con la forma exacta del layout mientras cargan los datos de las conversaciones.
+  - Criterio: M5.T5-C2: Superar la auditoría de accesibilidad automática asegurando contraste y etiquetas correctas en todos los estados.
 
-## Como desarrollador, necesito una API segura para gestionar la relación entre contactos de canales y perfiles de cliente.
+## Infraestructura de Tiempo Real
 
-- [ ] **Endpoints de la API para gestión de identidades y contactos** (pendiente)
-  - Depende de: Lógica de fusión de identidades y gestión de contactos
-  - Criterio: El endpoint de fusión devuelve un error 400 con un mensaje claro si los clientes no pertenecen a la misma empresa.
-  - Criterio: El detalle del cliente incluye la lista de canales/contactos asociados (ej. su WhatsApp ID y su Telegram handle).
-  - Criterio: Las respuestas de error siguen el formato estándar definido en el proyecto.
+- [ ] **Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant** (pendiente)
+  - Depende de: Tarea de purgado automático a las 72 horas y archivo inmutable en audit_logs
+  - Criterio: M5.T1-C1: Rechazar conexiones WebSocket sin token JWT válido o con un token de otra empresa.
+  - Criterio: M5.T1-C2: Publicar y recibir mensajes correctamente a través de los canales de Redis pub/sub.
 
-## Como empresa, deseo configurar los horarios de atención y un mensaje automático de bienvenida o ausencia para que los clientes sepan cuándo serán atendidos.
+## Filtros y Búsqueda en Bandeja
 
-- [ ] **Configuración de horarios de atención y despacho de respuestas automáticas fuera de horario** (pendiente)
-  - Depende de: Servicio de cifrado de credenciales y gestión CRUD de canales multi-tenant
-  - Criterio: El servicio evalúa con precisión si una conversación entra dentro o fuera del horario comercial según la zona horaria IANA de la empresa.
-  - Criterio: Se despacha el mensaje automático fuera de horario solo una vez por conversación entrante fuera de turno.
-  - Criterio: Endpoint REST para actualizar horario y mensaje fuera de oficina valida formato y esquema.
+- [ ] **Buscador con debounce y filtros modernos combinables** (pendiente)
+  - Depende de: Construcción de la bandeja unificada en React 18
+  - Criterio: M5.T3-C1: Ejecutar la búsqueda de conversaciones aplicando un debounce de 300ms sobre el input de texto.
+  - Criterio: M5.T3-C2: Reflejar los estados de los filtros combinados directamente en los query params de la URL.
 
-## Como administrador de empresa, quiero dar de alta y gestionar los canales de comunicación de forma segura sin exponer credenciales ni claves de acceso.
-
-- [ ] **Servicio de cifrado de credenciales y gestión CRUD de canales multi-tenant** (pendiente)
-  - Depende de: Pruebas de integración E2E de la bandeja unificada y verificación de rendimiento
-  - Criterio: Las credenciales de los canales se persisten cifradas en base de datos y no se exponen valores en texto claro al consultar la tabla directamente.
-  - Criterio: Los endpoints GET de canales devuelven las credenciales enmascaradas y rechazan solicitudes de agentes que no posean rol de administrador.
-  - Criterio: Aislamiento multi-tenant estricto en la administración de canales.
-
-## Como agente y supervisor, quiero disponer de respuestas rápidas y etiquetas para estandarizar la atención y categorizar los motivos de contacto.
+## Productividad de Agentes
 
 - [ ] **Gestión de respuestas rápidas y categorización por etiquetas** (pendiente)
   - Depende de: Servicio de cifrado de credenciales y gestión CRUD de canales multi-tenant
-  - Criterio: CRUD completo de respuestas rápidas con validación de atajo único por empresa.
-  - Criterio: Permisos RBAC diferenciados para administración y consulta de respuestas rápidas.
-  - Criterio: Asignación y remoción de etiquetas en conversaciones con persistencia transaccional.
+  - Criterio: M7.T3-C1: Los usuarios de una empresa solo pueden visualizar y utilizar las respuestas rápidas y etiquetas creadas dentro de su propio tenant.
+  - Criterio: M7.T3-C2: Las respuestas rápidas y etiquetas cuentan con validación de campos obligatorios y límites de longitud.
 
-## Como supervisor o administrador, quiero visualizar métricas de tiempos de respuesta, resolución y volúmenes para optimizar la productividad del equipo.
+## Gestión de Canales y Cifrado
+
+- [ ] **Servicio de cifrado de credenciales y gestión CRUD de canales multi-tenant** (pendiente)
+  - Depende de: Endpoint WebSocket en FastAPI para eventos de chat y aislamiento de tenant
+  - Criterio: M7.T1-C1: Las credenciales se almacenan completamente cifradas en la base de datos sin texto plano.
+  - Criterio: M7.T1-C2: Solo los usuarios con rol de administrador de la misma empresa pueden gestionar sus canales.
+  - Criterio: M7.T1-C3: Los campos de entrada de credenciales se validan estrictamente mediante esquemas Pydantic rechazando payloads malformados.
+
+## Horarios y Respuestas Automáticas
+
+- [ ] **Configuración de horarios de atención y despacho de respuestas automáticas fuera de horario** (pendiente)
+  - Depende de: Servicio de cifrado de credenciales y gestión CRUD de canales multi-tenant
+  - Criterio: M7.T2-C1: Los mensajes entrantes fuera del horario configurado generan una respuesta automática inmediata.
+  - Criterio: M7.T2-C2: Los administradores pueden configurar y actualizar sus horarios de atención mediante la API REST.
+
+## Analítica y Métricas
 
 - [ ] **Motor de agregación de métricas de rendimiento y tablero analítico** (pendiente)
-  - Depende de: Servicio de cifrado de credenciales y gestión CRUD de canales multi-tenant
-  - Criterio: Cálculo preciso del Tiempo de Primera Respuesta (FRT) y Tiempo de Resolución (TTR).
-  - Criterio: Agregación por canal y agente con filtros de rango de fechas.
-  - Criterio: Protección de datos y aislamiento tenant en las métricas.
+  - Depende de: Configuración de horarios de atención y despacho de respuestas automáticas fuera de horario, Gestión de respuestas rápidas y categorización por etiquetas
+  - Criterio: M7.T4-C1: El tablero de métricas calcula correctamente los tiempos de respuesta y resolución en base al historial de conversaciones.
+  - Criterio: M7.T4-C2: Las métricas están estrictamente aisladas por tenant y solo son accesibles por roles de supervisor y administrador.
 
-## Como equipo de calidad y seguridad, queremos garantizar la integridad de los datos de administración, la confidencialidad de las credenciales y la precisión de los reportes analíticos.
+## Aseguramiento de Calidad y Pruebas E2E
 
 - [ ] **Pruebas de integración E2E del panel de administración, métricas y seguridad de credenciales cifradas** (pendiente)
   - Depende de: Panel de administración y métricas por empresa
-  - Criterio: Flujo E2E completo de alta de canal, configuración de horario y visualización de métricas.
-  - Criterio: Verificación automatizada de no fuga de secretos en respuestas HTTP ni registros de logs.
-  - Criterio: Aislamiento multi-tenant validado en todas las operaciones del panel administrativo.
+  - Criterio: M7.T6-C1: El flujo completo de administración y métricas funciona de extremo a extremo contra una base de datos real en el entorno de CI.
+  - Criterio: M7.T6-C2: Ningún dato ni configuración de una empresa puede ser accedido o modificado por otra empresa bajo ninguna circunstancia de prueba.
 
-## Como administrador del sistema, quiero que la plataforma sea segura por defecto para proteger los datos de las empresas.
-
-- [ ] **Configuración de cabeceras de seguridad y middleware HTTPS** (pendiente)
-  - Depende de: Pruebas de integración E2E del panel de administración, métricas y seguridad de credenciales cifradas
-  - Criterio: La respuesta del backend incluye la cabecera Strict-Transport-Security con max-age de al menos un año.
-  - Criterio: La cabecera Content-Security-Policy (CSP) está presente y restringe orígenes no deseados.
-  - Criterio: Las peticiones HTTP son redirigidas automáticamente a HTTPS.
-
-## Como responsable de seguridad, quiero asegurar que no usamos librerías comprometidas en producción.
+## Gestión de dependencias seguras para el despliegue a producción de uwuChat.
 
 - [ ] **Auditoría de vulnerabilidades y fijación de dependencias** (pendiente)
   - Depende de: Configuración de cabeceras de seguridad y middleware HTTPS
-  - Criterio: El comando 'pip-audit' devuelve 0 vulnerabilidades críticas o altas en el entorno virtual del backend.
-  - Criterio: El comando 'npm audit' en la carpeta frontend no reporta vulnerabilidades de nivel 'high' o superior.
+  - Criterio: El escaneo de vulnerabilidades del backend con pip-audit retorna cero vulnerabilidades de criticidad alta o crítica.
+  - Criterio: El escaneo de dependencias npm audit en el frontend finaliza con código de salida cero y libre de incidencias de riesgo alto.
+  - Criterio: El proyecto cuenta con sus archivos de bloqueo (lockfiles) integrados en el repositorio de control de versiones.
 
-## Como DevOps, quiero un despliegue reproducible en cualquier entorno para evitar el 'en mi máquina funciona'.
-
-- [ ] **Empaquetado reproducible con Docker y Docker Compose** (pendiente)
-  - Depende de: Auditoría de vulnerabilidades y fijación de dependencias
-  - Criterio: Las imágenes de Docker se construyen sin errores y pesan menos de 500MB cada una.
-  - Criterio: El comando 'docker compose up' levanta todos los servicios y la aplicación responde en localhost.
-
-## Como QA, quiero validar que las funcionalidades centrales no se rompan antes de cada despliegue.
-
-- [ ] **Suite de pruebas E2E de flujos críticos** (pendiente)
-  - Depende de: Empaquetado reproducible con Docker y Docker Compose
-  - Criterio: El test de 'flujo completo de atención' termina con éxito simulando un cliente real.
-  - Criterio: Los tests comprueban que no se filtran datos de otras empresas (aislamiento multi-tenant) durante el flujo visual.
-
-## Como nuevo desarrollador o sysadmin, quiero poder poner en marcha el sistema sin ayuda externa.
-
-- [ ] **Manual de despliegue y documentación del proyecto** (pendiente)
-  - Depende de: Suite de pruebas E2E de flujos críticos
-  - Criterio: El archivo README.md incluye todas las secciones requeridas por PRD-DOC-01.
-  - Criterio: DEPLOY.md describe cómo realizar una actualización (rollback incluido) sin pérdida de datos.
-
-## Como dueño del producto, quiero garantizar la recuperación de datos ante fallos catastróficos.
-
-- [ ] **Scripts de copia de seguridad y restauración de base de datos** (pendiente)
-  - Depende de: Empaquetado reproducible con Docker y Docker Compose
-  - Criterio: El script backup.sh genera un archivo .sql.gz válido en la carpeta de backups.
-  - Criterio: Una base de datos vacía puede ser restaurada al estado del backup usando restore.sh.
-
-## Como equipo de operaciones, quiero un sistema limpio y fácil de monitorear en producción.
+## Control de calidad final, depuración de código muerto y monitorización del endpoint de salud.
 
 - [ ] **Limpieza de código muerto y verificación final de salud** (pendiente)
   - Depende de: Manual de despliegue y documentación del proyecto
-  - Criterio: Las herramientas de análisis de código muerto no reportan hallazgos significativos.
-  - Criterio: El endpoint /health devuelve 503 si la base de datos está caída y 200 si todo es funcional.
+  - Criterio: El analizador de código huérfano e imports confirma que el proyecto está limpio de referencias no utilizadas y dependencias sin declarar.
+  - Criterio: El endpoint de salud /health retorna un código de respuesta HTTP 200 conteniendo el estado del backend, conexión de persistencia y cola de caché Redis, sin filtrar secretos.
+  - Criterio: La suite de pruebas completa del repositorio (unitarias, integración y extremo a extremo) culmina exitosamente en un entorno limpio sin fallos.
+
+## Integridad de datos, respaldo periódico y mitigación ante fallos graves de persistencia.
+
+- [ ] **Scripts de copia de seguridad y restauración de base de datos** (pendiente)
+  - Depende de: Empaquetado reproducible con Docker and Docker Compose
+  - Criterio: El script de copia de seguridad genera un archivo dump válido con extensión SQL o binaria comprimida que contiene los esquemas multi-tenant completos.
+  - Criterio: El script de restauración reconstruye de forma idéntica todas las tablas de persistencia en un contenedor PostgreSQL recién inicializado, validado mediante comparación de esquemas.
+  - Criterio: Procedimiento de restauración de desastres verificado por un operador humano a partir de la documentación proporcionada.
+
+## Establecimiento de las guías de despliegue, variables de producción y metadatos SEO mínimos.
+
+- [ ] **Manual de despliegue y documentación del proyecto** (pendiente)
+  - Depende de: Suite de pruebas E2E de flujos críticos
+  - Criterio: El archivo DEPLOY.md describe adecuadamente todas y cada una de las variables presentes en el archivo .env.example del proyecto.
+  - Criterio: La documentación de despliegue detalla los comandos requeridos, la configuración de HTTPS, dominios, variables y cómo volver a una versión previa.
+  - Criterio: La cabecera HTML del frontend de React expone títulos, meta descripciones de contenido, favicon institucional y metadatos básicos en formato Open Graph.
+
+## Aseguramiento de flujos principales y aislamiento multi-tenant a nivel de producción.
+
+- [ ] **Suite de pruebas E2E de flujos críticos** (pendiente)
+  - Depende de: Scripts de copia de seguridad y restauración de base de datos
+  - Criterio: El test de extremo a extremo simula con éxito la interacción del flujo crítico, cubriendo inicio de sesión, asignación de chat y respuesta sin provocar excepciones en el navegador ni en el servidor.
+  - Criterio: La suite de pruebas contiene aserciones explícitas que intentan acceder de forma no autorizada a datos de un tenant ajeno, resultando en rechazo automático por parte de la API.
+
+## Configuración de seguridad a nivel de red y transporte para todo el entorno del tenant.
+
+- [ ] **Configuración de cabeceras de seguridad y middleware HTTPS** (pendiente)
+  - Depende de: Pruebas de integración E2E del panel de administración, métricas y seguridad de credenciales cifradas
+  - Criterio: Las respuestas del backend FastAPI devuelven las cabeceras HSTS, X-Content-Type-Options, Referrer-Policy y Content-Security-Policy (CSP) validadas por un cliente HTTP de pruebas.
+  - Criterio: Cualquier solicitud HTTP entrante a rutas protegidas o públicas redirige con código 301/307 hacia su contraparte segura HTTPS.
+  - Criterio: La aplicación no puede ser incrustada en iframes externos mediante validación estricta de frame-ancestors o X-Frame-Options.
+
+## Estandarización de contenedores para desarrollo y producción mediante empaquetamiento seguro.
+
+- [ ] **Empaquetado reproducible con Docker and Docker Compose** (pendiente)
+  - Depende de: Auditoría de vulnerabilidades y fijación de dependencias
+  - Criterio: La compilación de las imágenes Docker se ejecuta exitosamente sin requerir o instalar dependencias de desarrollo locales.
+  - Criterio: El comando docker-compose up inicializa correctamente los servicios de DB, Redis, API y Frontend y permite interactuar con la interfaz en el puerto configurado.
+  - Criterio: El contenedor de backend rechaza arrancar si faltan variables de entorno críticas necesarias para su ejecución.
