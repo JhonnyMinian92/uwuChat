@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional, List
-from sqlalchemy import String, Text, JSON, Enum as SQLEnum
+from sqlalchemy import String, Text, JSON, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
 from .base import Base, TimestampMixin, OptimisticMixin, TenantMixin
@@ -24,6 +24,7 @@ class User(Base, TimestampMixin, OptimisticMixin, TenantMixin):
     
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole), default=UserRole.AGENT)
     
@@ -41,7 +42,7 @@ class Channel(Base, TimestampMixin, TenantMixin):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     type: Mapped[ChannelType] = mapped_column(SQLEnum(ChannelType))
     name: Mapped[str] = mapped_column(String(100))
-    credentials: Mapped[dict] = mapped_column(JSON)  # Encrypted in business logic layer
+    credentials: Mapped[dict] = mapped_column(JSON)
     is_active: Mapped[bool] = mapped_column(default=True)
 
 class Contact(Base, TimestampMixin, TenantMixin):
@@ -73,8 +74,8 @@ class Message(Base, TimestampMixin, TenantMixin):
     
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     conversation_id: Mapped[uuid.UUID] = mapped_column(uuid.UUID, ForeignKey("conversations.id"))
-    sender_type: Mapped[str] = mapped_column(String(20)) # 'agent' or 'client'
-    sender_id: Mapped[Optional[uuid.UUID]] = mapped_column(uuid.UUID) # Can be User.id if agent
+    sender_type: Mapped[str] = mapped_column(String(20))
+    sender_id: Mapped[Optional[uuid.UUID]] = mapped_column(uuid.UUID)
     content: Mapped[str] = mapped_column(Text)
     external_id: Mapped[Optional[str]] = mapped_column(String(255))
     metadata_json: Mapped[Optional[dict]] = mapped_column(JSON)
